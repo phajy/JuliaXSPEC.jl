@@ -1,0 +1,36 @@
+# Julia
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+Manifest.toml
+LocalPreferences.toml
+
+# Compiled Julia library (PackageCompiler output)
+/build/
+
+# XSPEC local-model package: everything initpackage/hmake generates.
+# model.dat and juliaxspec_wrappers.c are generated too, but are tracked so
+# readers can see exactly what XSPEC is given.
+/xspec/Makefile
+/xspec/lpack_*
+/xspec/*FunctionMap.*
+/xspec/pkgIndex.tcl
+/xspec/*.o
+/xspec/*.dylib
+/xspec/*.so
+/xspec/*.bck
+
+# Large table models and simulated data live outside git
+*.fits
+*.fak
+*.pha
+*.rmf
+*.arf
+
+# Verification output and documentation build
+/verification/output/
+/docs/build/
+
+# Editor / OS
+.DS_Store
+.vscode/
