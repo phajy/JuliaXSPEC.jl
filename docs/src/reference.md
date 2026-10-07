@@ -58,6 +58,10 @@ grid_size
 evaluate_exact
 cache_stats
 empty_cache!
+disk_loads
+cache_memory_used_bytes
+cache_limit_bytes
+cache_directory
 ```
 
 ## Kernels and convolution
@@ -68,6 +72,17 @@ GaussianKernel
 cumulative
 convolution_matrix
 convolve
+convolve_fft
+convolution_method
+```
+
+## Tables
+
+```@docs
+OGIPTable
+resolve_table_path
+write_ogip_table
+Blurred
 ```
 
 ## Analytic spectra

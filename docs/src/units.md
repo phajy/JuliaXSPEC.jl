@@ -95,10 +95,12 @@ xspec_ready = rebin(internal, edges)       # edges: whatever XSPEC asked for
 
 ## Table models
 
-XSPEC table models (OGIP 92-009 `atable`/`mtable` files) store spectra in
-exactly this per-bin form: each row of the `SPECTRA` extension holds the
-photons cm⁻² s⁻¹ in each of the table's energy bins, for one combination of
-parameter values. Reading one into a `BinnedSpectrum` on the table's own
-energy grid therefore involves no unit conversion at all; XSPEC's `atable`
-evaluation is the interpolation between parameter rows followed by a
-`rebin` onto the current energy grid.
+XSPEC table models (OGIP 92-009 `atable` files) store spectra in exactly this
+per-bin form: each row of the `SPECTRA` extension holds the photons cm⁻² s⁻¹
+in each of the table's energy bins, for one combination of parameter values.
+[`OGIPTable`](@ref) reads those rows straight into memory. Evaluating the
+table is interpolation between parameter rows — linear, or logarithmic when
+the file's METHOD flag says so — followed by a [`rebin`](@ref) onto whatever
+bins XSPEC asked for. There is no conversion between density and per-bin
+counts anywhere in that path, which is why `jltable` can be compared directly
+with `atable{xillverD-5.fits}`.

@@ -1,0 +1,49 @@
+# Phase 2 verification. Run from verification/, after both build steps and
+# with xillverD-5.fits in the repository root:
+#   xspec - phase2.xcm
+#
+# Then: julia --project=. compare.jl
+
+lmod juliaxspec ../xspec
+dummyrsp 0.1 50 2000 log
+setplot energy
+cpd /null
+
+proc dump {file} {
+    plot model
+    tclout plot model x
+    set x $xspec_tclout
+    tclout plot model xerr
+    set dx $xspec_tclout
+    tclout plot model y
+    set y $xspec_tclout
+    set f [open $file w]
+    foreach xi $x dxi $dx yi $y { puts $f "$xi $dxi $yi" }
+    close $f
+    puts "wrote $file"
+}
+
+file mkdir output
+
+# 1. The table reader against XSPEC's own atable. Defaults sit on the Gamma,
+#    A_Fe, logXi and Dens grid points; Incl = 45 is between grid points, so
+#    this also checks the interpolation. atable adds a redshift parameter.
+model atable{../xillverD-5.fits} & 2.0 & 1.0 & 2.0 & 17.0 & 45.0 & 0.0 & 1.0 & /*
+dump output/atable_xillver_default.dat
+model jltable & 2.0 & 1.0 & 2.0 & 17.0 & 45.0 & 1.0 & /*
+dump output/jltable_default.dat
+
+# 2. FFT convolution against the direct matrix, on the same Gaussian line.
+model jlgconv*gaussian & 0.05 & 6.4 & 0.1 & 1 & /*
+dump output/jlgconv_line.dat
+model jlgconvfft*gaussian & 0.05 & 6.4 & 0.1 & 1 & /*
+dump output/jlgconvfft_line.dat
+
+# 3. Blurring the table inside Julia, on the table's own energy grid, against
+#    letting XSPEC hand the rebinned table to a convolution component.
+model jlgconv*atable{../xillverD-5.fits} & 0.05 & 2.0 & 1.0 & 2.0 & 17.0 & 45.0 & 0.0 & 1.0 & /*
+dump output/jlgconv_atable.dat
+model jltableblur & 0.05 & 2.0 & 1.0 & 2.0 & 17.0 & 45.0 & 1.0 & /*
+dump output/jltableblur.dat
+
+exit

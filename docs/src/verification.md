@@ -11,7 +11,8 @@ them with XSPEC's own models, so they exercise the C bridge, the generated
 From the `verification/` directory, after both build steps:
 
 ```sh
-xspec - phase1.xcm                 # evaluates model pairs, writes output/*.dat
+xspec - phase1.xcm                 # Gaussian models
+xspec - phase2.xcm                 # table, FFT and composite blur (needs xillverD-5.fits)
 julia --project=. -e 'using Pkg; Pkg.develop(path = ".."); Pkg.instantiate()'   # first time only
 julia --project=. compare.jl       # prints the summary below and writes the figures
 ```
@@ -88,8 +89,49 @@ to use XSPEC's `energies extend` with any convolution model.
 
 ![jlgconv on a power law](assets/verification_jlgconv_powerlaw.png)
 
+## Phase 2
+
+`phase2.xcm` uses the same 0.1–50 keV grid.
+
+```text
+jltable vs atable{xillverD-5} at the file's default parameters  max |Δ| / peak =  0.00e+00   tolerance 1.0e-03   ok
+jlgconvfft vs jlgconv, both blurring gaussian(6.4, 0.1)         max |Δ| / peak =  2.85e-04   tolerance 1.0e-03   ok
+jltableblur vs jlgconv * atable, 2–10 keV                       max |Δ| / peak =  6.41e-04   tolerance 2.0e-03   ok
+```
+
+### 5. `jltable` against `atable{xillverD-5.fits}`
+
+Both interpolate the same FITS file. The default parameters lie on the
+Gamma, iron, ionisation and density grid points, and halfway between two
+inclination points, so this checks the interpolation as well as the file
+reader. The two spectra are identical, bin for bin: the largest difference is
+zero. XSPEC's `atable` also has a redshift parameter, left at zero here.
+
+![jltable against atable](assets/verification_jltable.png)
+
+### 6. FFT against the direct matrix
+
+`jlgconvfft` and `jlgconv` blur the same Gaussian line. The largest difference
+is ``3 \times 10^{-4}`` of the peak, which is the rebinning onto the FFT's
+logarithmic working grid and back. The direct matrix remains the definition of
+the operator; the FFT is the same operator computed a faster way
+([Convolution](convolution.md), step 6).
+
+![FFT against direct](assets/verification_jlgconvfft.png)
+
+### 7. Blurring on the table grid
+
+`jltableblur` convolves the xillver table from the table's own bins (0.07 to
+1000 keV) onto XSPEC's bins. `jlgconv * atable{...}` first rebins the table
+onto XSPEC's bins and only then blurs, so photons that would redshift in from
+outside the response are missing. Through 2–10 keV the two agree to
+``6 \times 10^{-4}`` of the peak. At the ends of the grid the composite is
+higher, which is the band-edge effect of step 7: those photons exist in the
+table and not in the spectrum XSPEC handed to `jlgconv`.
+
+![composite blur](assets/verification_jltableblur.png)
+
 ## Planned comparisons
 
-Later phases will add, with the same machinery: `jltable` against
-`atable{xillverD-5.fits}`; FFT against direct convolution; and relativistic
-blurring kernels against relxill's `relconv`, `relconv_lp` and `relxilllp`.
+Relativistic blurring kernels against relxill's `relconv`, `relconv_lp` and
+`relxilllp` are the next check, once those kernels exist.

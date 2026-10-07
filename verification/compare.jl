@@ -40,13 +40,14 @@ function report(label, test, reference; tol, mask = trues(length(test)))
     return worst
 end
 
-function overlay(title, E, curves, ylabel; residual = nothing, legend = :topright)
+function overlay(title, E, curves, ylabel; residual = nothing, legend = :topright, residual_ylims = nothing)
     top = plot(; title, ylabel, legend)
     for (name, y, style) in curves
         plot!(top, E, y; label = name, style...)
     end
     residual === nothing && return top
-    bottom = plot(E, residual.y; xlabel = "Energy (keV)", ylabel = residual.label, label = "")
+    bottom_kwargs = residual_ylims === nothing ? NamedTuple() : (; ylims = residual_ylims)
+    bottom = plot(E, residual.y; xlabel = "Energy (keV)", ylabel = residual.label, label = "", bottom_kwargs...)
     hline!(bottom, [0.0]; color = :gray, linestyle = :dash, label = "")
     return plot(top, bottom; layout = grid(2, 1, heights = [0.7, 0.3]), link = :x, size = (800, 600))
 end
@@ -110,6 +111,48 @@ hline!(fig4, [factor]; color = :black, linestyle = :dash, label = @sprintf("∫ 
 vspan!(fig4, [pl.E[1], 0.1 / kernel.g[1]]; color = :gray, alpha = 0.2, label = "band edges: photons leave the grid")
 vspan!(fig4, [50.0 / kernel.g[end], pl.E[end]]; color = :gray, alpha = 0.2, label = "")
 savefig(fig4, joinpath(FIGS, "verification_jlgconv_powerlaw.png"))
+
+println("\nPhase 2 verification\n")
+
+atable = read_model("atable_xillver_default")
+jltable = read_model("jltable_default")
+report("jltable vs atable{xillverD-5} at the file's default parameters", jltable.density, atable.density; tol = 1e-3)
+window = 1.0 .< atable.E .< 20.0
+peak = maximum(atable.density[window])
+savefig(
+    overlay("jltable against XSPEC atable{xillverD-5}", atable.E[window],
+        [("atable", atable.density[window], (linewidth = 2, color = :black)),
+         ("jltable", jltable.density[window], (linewidth = 1.2, color = :orange, linestyle = :dash))],
+        "photons / cm² / s / keV";
+        residual = (y = (jltable.density .- atable.density)[window] ./ peak, label = "(jltable − atable) / peak"),
+        residual_ylims = (-1e-3, 1e-3)),
+    joinpath(FIGS, "verification_jltable.png"))
+
+direct_line = read_model("jlgconv_line")
+fft_line = read_model("jlgconvfft_line")
+report("jlgconvfft vs jlgconv, both blurring gaussian(6.4, 0.1)", fft_line.density, direct_line.density; tol = 1e-3)
+window = 4.0 .< direct_line.E .< 9.0
+savefig(
+    overlay("FFT blur against the direct matrix", direct_line.E[window],
+        [("jlgconv (direct)", direct_line.density[window], (linewidth = 2, color = :black)),
+         ("jlgconvfft", fft_line.density[window], (linewidth = 1.2, color = :orange, linestyle = :dash))],
+        "photons / cm² / s / keV";
+        residual = (y = (fft_line.density .- direct_line.density)[window] ./ maximum(direct_line.density),
+                    label = "(fft − direct) / peak")),
+    joinpath(FIGS, "verification_jlgconvfft.png"))
+
+wrapped = read_model("jlgconv_atable")
+composite = read_model("jltableblur")
+band = (wrapped.E .> 2.0) .& (wrapped.E .< 10.0)
+report("jltableblur vs jlgconv * atable, 2–10 keV", composite.density, wrapped.density; tol = 2e-3, mask = band)
+ratio = composite.density ./ max.(wrapped.density, 1e-6 * maximum(wrapped.density))
+fig = plot(wrapped.E, ratio; xscale = :log10, xlabel = "Energy (keV)", ylabel = "jltableblur / (jlgconv * atable)",
+           label = "", linewidth = 2, ylims = (0.9, 1.1), size = (800, 420),
+           title = "Blurring on the table grid versus blurring XSPEC's bins",
+           bottom_margin = 5Plots.mm)
+hline!(fig, [1.0]; color = :black, linestyle = :dash, label = "")
+vspan!(fig, [2.0, 10.0]; color = :gray, alpha = 0.15, label = "2–10 keV comparison band")
+savefig(fig, joinpath(FIGS, "verification_jltableblur.png"))
 
 println("\nFigures written to ", abspath(FIGS))
 if failures[] > 0

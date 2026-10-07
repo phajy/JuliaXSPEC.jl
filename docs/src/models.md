@@ -122,4 +122,18 @@ checks the bridge without XSPEC.
 If your model is slow, compute it on a fixed internal energy grid at the
 corners of a parameter grid with [`GridInterpolator`](@ref), and `rebin`
 onto XSPEC's bins — see [Caching on a grid](caching.md). The `jlgausscached`
-reference model shows the pattern in a dozen lines.
+reference model shows the pattern in a dozen lines. Give the interpolator
+`cache = "a-name"` to keep those corners on disk between XSPEC sessions.
+
+## Table models
+
+[`OGIPTable`](@ref) reads an additive XSPEC table file. The reference model
+`jltable` is `xillverD-5.fits`, found via [`resolve_table_path`](@ref) (the
+repository root, the current directory, or `JULIAXSPEC_TABLE_DIR`). The first
+evaluation reads the whole file, about a gigabyte; later evaluations only
+interpolate.
+
+[`Blurred`](@ref) builds an additive model from a table and a kernel, blurring
+on the table's energy grid so that photons outside the instrument band can
+still redshift into it. `jltableblur` is that model with a Gaussian kernel.
+See [Convolution](convolution.md), step 9.

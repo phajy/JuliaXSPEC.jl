@@ -21,14 +21,15 @@ implementation first, and faster versions are added alongside, never instead.
 
 ## Status
 
-Phase 1 complete: the XSPEC bridge, `GridInterpolator`, the direct
-convolution, and three reference models (`jlgauss`, `jlgausscached`,
-`jlgconv`) that run inside XSPEC and agree with XSPEC's built-in `gaussian`
-and `powerlaw` to the expected precision (see the Verification page).
+Phase 2: the XSPEC bridge, grid caching (in memory and on disk), direct and
+FFT convolution, and OGIP table models. The reference models `jlgauss`,
+`jlgausscached`, `jlgconv`, `jlgconvfft`, `jltable` and `jltableblur` run
+inside XSPEC. `jltable` is checked against `atable{xillverD-5.fits}`, and the
+FFT blur against the direct matrix (see the Verification page).
 
-Planned: OGIP table models, FFT convolution, relativistic blurring via an
-optional [Gradus.jl](https://codeberg.org/astro-group/Gradus.jl) extension,
-verification against relxill, and examples calling external tools such as
+Planned: relativistic blurring via an optional
+[Gradus.jl](https://codeberg.org/astro-group/Gradus.jl) extension, verification
+against relxill, and examples calling external tools such as
 [kerrz](https://git.sr.ht/~fjebaker/kerrz).
 
 ## A model in three lines

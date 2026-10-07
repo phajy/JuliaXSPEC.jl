@@ -9,7 +9,10 @@ and that you start `xspec` in the repository root.
 |-------|------|------------|----------------------|
 | `jlgauss` | add | `LineE`, `Sigma` | A model evaluated directly: a Gaussian line, identical to XSPEC's `gaussian` |
 | `jlgausscached` | add | `LineE`, `Sigma` | The same line interpolated from a grid of cached evaluations |
-| `jlgconv` | con | `SigmaG` | A convolution model: Gaussian blur in ``g = E_{\rm obs}/E_{\rm em}`` |
+| `jlgconv` | con | `SigmaG` | Gaussian blur in ``g``, by the direct matrix |
+| `jlgconvfft` | con | `SigmaG` | The same blur, by FFT |
+| `jltable` | add | `Gamma`, `A_Fe`, `logXi`, `Dens`, `Incl` | The `xillverD-5` reflection table |
+| `jltableblur` | add | `SigmaG` plus the table parameters | That table, blurred on its own energy grid |
 
 ## A first look
 
@@ -63,6 +66,12 @@ power law keeps its slope and only changes normalisation, as the
 Because `jlgconv` is an XSPEC `con` component it can wrap anything, including
 table models: `jlgconv * atable{xillverD-5.fits}` blurs a reflection
 spectrum.
+
+`jltable` needs `xillverD-5.fits` (see [Installation and build](build.md)).
+Its first evaluation reads the file; after that it is ordinary interpolation.
+`jlgconvfft * gaussian` should overlie `jlgconv * gaussian`.
+`jltableblur` and `jlgconv * atable{xillverD-5.fits}` are the same blur
+arranged two ways, and they agree through the middle of the band.
 
 ## Scripts
 

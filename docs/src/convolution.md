@@ -186,16 +186,38 @@ second. For very broad kernels (a maximally spinning black hole spreads
 motivates the next step. The direct method remains the reference against
 which anything faster is checked.
 
-## 6. A faster implementation (planned)
+## 6. The fast implementation
 
-Because the operation is a translation convolution in ``\tau = \ln E``
-(step 3), it can be done with a fast Fourier transform: rebin the input onto a
-uniform grid in ``\ln E``, convert to density per unit ``\tau``, multiply the
-transforms of the spectrum and of ``L(e^{\tau})``, transform back, and rebin
-onto the output grid. The cost then grows only as ``m \log m`` with the size
-``m`` of the log grid, independent of the kernel width. This will be added in
-a later phase alongside the direct method, with tests that the two agree; the
-direct method stays as the readable definition.
+The direct matrix is the definition of the operator. The same integral is also
+a convolution in ``\tau = \ln E``, which a fast Fourier transform evaluates in
+time proportional to ``m \log m`` rather than to the area of the matrix.
+
+Set ``E = e^{\tau}`` and change variables in the integral of step 3
+(``dE_e / E_e = d\tau``):
+
+```math
+n_{\rm obs}(e^{u}) = \int L(e^{u - v})\, n_{\rm em}(e^{v})\, dv .
+```
+
+On a grid with uniform spacing ``\Delta\tau`` this is the discrete convolution
+``n_{\rm obs}[i] = \sum_k L(e^{k\Delta\tau})\, n_{\rm em}[i-k]\, \Delta\tau``.
+[`convolve_fft`](@ref) therefore:
+
+1. rebins the input onto a uniform logarithmic grid covering the input and
+   output energies (about 0.5% per bin, and at least as many bins as the input
+   has; override with `JULIAXSPEC_FFT_NBINS`);
+2. turns photons per bin into a per-keV density by dividing by the bin width;
+3. multiplies the Fourier transforms of that density and of
+   ``L(e^{\tau})\Delta\tau``, with the kernel zero-padded so a redshift off one
+   end of the grid does not wrap around to the other end;
+4. multiplies the result by the bin width and rebins onto `out_edges`.
+
+Tiny negative values from the transform are clipped to zero. They are
+numerical noise: on the grids used here the FFT and the direct matrix agree to
+about one part in ``10^{4}`` (see [Verification](verification.md)), and the
+direct method remains available as `convolve(...; method = :direct)` for
+anything that has to be checked exactly. `method = :fft` selects the fast
+path, as does `JULIAXSPEC_CONVOLVE=fft`.
 
 ## 7. Band edges: photons that leave or arrive
 
@@ -247,16 +269,27 @@ number, matching the convention here; when comparing with other codes it is
 always worth checking whether photons or energy flux are conserved, because
 the two choices differ by the factor ``\langle g \rangle`` of step 3.
 
-## 9. Composite models: blurring the source yourself (planned)
+## 9. Composite models: blurring the source yourself
 
-Instead of exposing the kernel as a `con` component and letting XSPEC supply
-the input, a Julia model can compute the source spectrum (for example by
-interpolating an OGIP reflection table), blur it on the table's own fine
-energy grid — which extends well beyond any response — and `rebin` the result
-onto XSPEC's bins. This sidesteps the band-edge issue of step 7 and the
-uniform-within-bin approximation of step 4 at the same time, at the price of
-fixing the source model inside the Julia component. JuliaXSPEC will offer both
-routes; the `con` route is what allows direct comparison with `relconv`.
+A `con` component can only blur the photons XSPEC hands it, which stop at the
+edge of the response (step 7). A model that computes the source itself has the
+rest of the spectrum available. [`Blurred`](@ref) interpolates an
+[`OGIPTable`](@ref) on the table's own energy grid and convolves *from those
+bins onto XSPEC's bins*:
+
+```julia
+source = BinnedSpectrum(table.edges, table(parameters...))
+convolve(source, kernel; out_edges = xspec_edges)
+```
+
+A photon emitted at 20 keV in the table can redshift into a 2–10 keV response,
+because the input grid extends past the output grid. The price is that the
+source model is fixed inside the Julia component. `jltableblur` is this
+construction for `xillverD-5.fits` with a Gaussian kernel; the `con` route
+(`jlgconv * atable{...}`) remains available for comparison. The two differ
+near the ends of the response, where only the composite still has photons to
+shift in, and they agree through the middle of the band
+([Verification](verification.md)).
 
 ## 10. Checks
 
@@ -274,6 +307,8 @@ Each statement above has a corresponding test in `test/runtests.jl`:
 - **Power law:** blurring ``E^{-\Gamma}`` returns ``E^{-\Gamma}`` multiplied
   by ``\int L(g)\,g^{\Gamma - 1}\,dg`` — a power law has no features to blur,
   but its normalisation changes, exactly as step 3 predicts.
+- **FFT against direct:** on a logarithmic grid the two implementations of the
+  same Gaussian blur agree to about one part in ``10^{4}``.
 - **In XSPEC:** `jlgconv * gaussian` with a narrow line is compared against
-  XSPEC's own `gaussian` with the predicted width; see
-  [Verification](verification.md).
+  XSPEC's own `gaussian` with the predicted width, and `jlgconvfft` against
+  `jlgconv`; see [Verification](verification.md).

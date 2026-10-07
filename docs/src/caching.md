@@ -90,13 +90,38 @@ empty_cache!(CACHED_GAUSSIAN)
 few evaluations compute the corners around the starting point and the rest
 of the fit is almost free, as long as the parameters stay in the same region.
 
-## Planned extensions
+## Keeping corners on disk
 
-- Persisting corners to disk so that they survive an XSPEC restart, with a
-  memory budget and least-recently-used eviction.
-- Reading OGIP table models as `GridInterpolator`s whose corners come from a
-  FITS file rather than a function, so table and on-the-fly models share one
-  code path.
-- `GridInterpolator` is the first implementation of an emulator interface;
-  a machine-learning emulator trained on the same corners could later replace
-  multilinear interpolation without changing the models that use it.
+Pass a cache name and each newly computed corner is written under
+[`cache_directory`](@ref) (`~/.julia/juliaxspec` by default, or
+`JULIAXSPEC_CACHE_DIR`):
+
+```julia
+GridInterpolator((spin = range(0, 0.998, 11),); cache = "lamppost-v1") do spin
+    expensive_line_profile(spin)
+end
+```
+
+The next session, or a new interpolator with the same name and the same grid,
+reads the file instead of calling the function. [`disk_loads`](@ref) counts
+those reads. [`empty_cache!`](@ref) forgets the RAM copy only. Changing the
+grid under the same name deletes the old files, because they would no longer
+be the right corners; changing the name (the `v1`) does the same when you have
+changed the function rather than the grid.
+
+All grid caches in the process share a RAM budget of
+`JULIAXSPEC_CACHE_LIMIT_GB` gigabytes (default 16; `0` means no limit). Past
+the budget, the least recently used corner of a cache is dropped from RAM.
+The disk copy, if there is one, stays. [`cache_memory_used_bytes`](@ref)
+reports the total.
+
+## Table models use the same interpolator
+
+An [OGIP table](https://heasarc.gsfc.nasa.gov/FTP/caldb/docs/memos/ogip_92_009/ogip_92_009.pdf)
+is a grid whose corners were computed in advance and stored as photons per
+bin. [`OGIPTable`](@ref) reads one and interpolates it with a
+`GridInterpolator`, taking the linear-or-log choice from each parameter's
+METHOD flag rather than from the spacing. See [Writing a model](models.md).
+
+A machine-learning emulator trained on the same corners could later replace
+the multilinear blend without changing the models that call the interpolator.

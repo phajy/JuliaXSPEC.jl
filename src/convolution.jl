@@ -57,23 +57,34 @@ function convolution_matrix(
 end
 
 """
-    convolve(spectrum, kernel; out_edges = spectrum.edges, n_sub = 4) -> BinnedSpectrum
+    convolve(spectrum, kernel; out_edges = spectrum.edges, n_sub = 4,
+             method = convolution_method()) -> BinnedSpectrum
 
 Blur a [`BinnedSpectrum`](@ref) with a [`RedshiftKernel`](@ref): every photon
 at energy `E` is redistributed to `g E` with probability `L(g) dg`. The result
 is on `out_edges` (by default the input bins, which is what an XSPEC
 convolution model must return).
 
-This is the direct implementation, `convolution_matrix(...) * per_bin`: simple
-and exact up to the sub-bin quadrature, with cost proportional to the number
-of input bins times the number of output bins within the kernel's reach.
+`method = :direct` (the default) multiplies by [`convolution_matrix`](@ref):
+simple, and exact up to the sub-bin quadrature. `method = :fft` is the same
+operator evaluated with a fast Fourier transform on a uniform grid in ``\\ln E``
+([`convolve_fft`](@ref)); it is much cheaper for broad kernels and fine grids,
+and it is checked against the direct method rather than replacing it.
 """
 function convolve(
     spectrum::BinnedSpectrum,
     kernel::RedshiftKernel;
     out_edges::AbstractVector{<:Real} = spectrum.edges,
     n_sub::Integer = 4,
+    method::Symbol = convolution_method(),
+    n_bins::Union{Nothing, Integer} = nothing,
 )
-    M = convolution_matrix(spectrum.edges, out_edges, kernel; n_sub)
-    return BinnedSpectrum(collect(float.(out_edges)), M * spectrum.per_bin)
+    if method === :direct
+        M = convolution_matrix(spectrum.edges, out_edges, kernel; n_sub)
+        return BinnedSpectrum(collect(float.(out_edges)), M * spectrum.per_bin)
+    elseif method === :fft
+        return convolve_fft(spectrum, kernel; out_edges, n_bins)
+    else
+        throw(ArgumentError("convolution method must be :direct or :fft, got $(repr(method))"))
+    end
 end

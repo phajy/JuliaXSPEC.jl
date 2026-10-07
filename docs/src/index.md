@@ -61,17 +61,16 @@ tested against the simple ones.
 
 ## Status and roadmap
 
-**Phase 1 (this release):** the bridge, `GridInterpolator`, the direct
-convolution, and three reference models — `jlgauss`, `jlgausscached` and
-`jlgconv` — verified against XSPEC's `gaussian`.
+**Phase 2 (this release):** everything in phase 1, plus OGIP table models
+(`jltable`, checked against `atable`), FFT convolution checked against the
+direct matrix (`jlgconvfft`), disk persistence and a RAM budget for grid
+corners, and a composite blur on the table's own energy grid (`jltableblur`).
 
-**Planned:** OGIP table models as `GridInterpolator`s backed by FITS files;
-FFT convolution checked against the direct method; disk persistence of grid
-corners; relativistic kernels through an optional
-[Gradus.jl](https://codeberg.org/astro-group/Gradus.jl) extension with
+**Planned:** relativistic kernels through an optional
+[Gradus.jl](https://codeberg.org/astro-group/Gradus.jl) extension, with
 verification against relxill; examples driving external tools such as
-[kerrz](https://git.sr.ht/~fjebaker/kerrz) and wrapping
-SpectralFitting.jl models.
+[kerrz](https://git.sr.ht/~fjebaker/kerrz) and wrapping SpectralFitting.jl
+models.
 
 JuliaXSPEC is a reimplementation, with a clearer separation of concerns, of
 the ideas first worked out in

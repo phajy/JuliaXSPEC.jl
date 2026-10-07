@@ -91,8 +91,24 @@ JuliaXSPEC reads these environment variables (set them before starting
 
 - `JULIAXSPEC_VERBOSE=1` — print one line per model evaluation with the
   parameters, number of bins and timing.
+- `JULIAXSPEC_CONVOLVE=fft` — make [`convolve`](@ref) use the FFT path unless a
+  model asks for a method explicitly. The default is `direct`.
+- `JULIAXSPEC_FFT_NBINS` — number of logarithmic bins in an FFT convolution.
+- `JULIAXSPEC_TABLE_DIR` — directory to search first for table files such as
+  `xillverD-5.fits`. Otherwise the repository root and the current directory
+  are tried. The file is not part of the git repository.
+- `JULIAXSPEC_CACHE_DIR` — where grid corners are written (default
+  `~/.julia/juliaxspec`).
+- `JULIAXSPEC_CACHE_LIMIT_GB` — shared RAM budget for cached grid corners
+  (default 16; `0` for no limit).
 
 ## Troubleshooting
+
+On macOS, FFTW (used by the fast convolution) pulls in Intel's oneTBB
+threading library. Its malloc-replacement library crashes XSPEC, which
+allocated its memory before our library was loaded. `scripts/compile.jl`
+replaces that one library with an empty one after the build; the rest of
+oneTBB is unused. Linux does not need this.
 
 - **`lmod` fails to find the library.** Check that `xspec/libjuliaxspec.*`
   exists (step 2 succeeded) and that the path given to `lmod` is the `xspec/`
@@ -103,3 +119,6 @@ JuliaXSPEC reads these environment variables (set them before starting
   the fit does not proceed silently with wrong values.
 - **Changes to `models/` have no effect.** Re-run `./build-julia.sh`; the
   compiled library is a snapshot of the Julia code at build time.
+- **`jltable` cannot find `xillverD-5.fits`.** Put the file in the repository
+  root, or set `JULIAXSPEC_TABLE_DIR` to the directory that contains it, and
+  start XSPEC again.

@@ -13,6 +13,7 @@ using PackageCompiler
 using JuliaXSPEC, JuliaXSPECModels
 
 const ROOT = dirname(@__DIR__)
+include(joinpath(ROOT, "scripts", "stub_tbbmalloc_proxy.jl"))
 
 println("Compiling models/ into build/ (this takes several minutes) ...")
 create_library(
@@ -21,8 +22,13 @@ create_library(
     lib_name = "juliaxspec_models",
     force = true,
     include_transitive_dependencies = true,
+    # FFTW brings in oneTBB, whose initialiser looks for its own files.
+    include_lazy_artifacts = true,
     precompile_execution_file = joinpath(ROOT, "scripts", "precompile_models.jl"),
 )
+
+# macOS: oneTBB's malloc proxy segfaults XSPEC. See stub_tbbmalloc_proxy.jl.
+stub_tbbmalloc_proxy!(joinpath(ROOT, "build"))
 
 println("Writing xspec/model.dat and xspec/juliaxspec_wrappers.c for: ",
         join([m.name for m in registered_models()], ", "))

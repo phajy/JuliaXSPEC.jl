@@ -44,3 +44,27 @@ void jlgconv(const double *energy, int nflux, const double *params, int spectrum
     ensure_julia_started();
     juliaxspec_evaluate("jlgconv", energy, nflux, params, spectrum, flux, flux_error, init);
 }
+
+/* jlgconvfft (con): Gaussian blur in g, evaluated with an FFT */
+void jlgconvfft(const double *energy, int nflux, const double *params, int spectrum,
+              double *flux, double *flux_error, const char *init)
+{
+    ensure_julia_started();
+    juliaxspec_evaluate("jlgconvfft", energy, nflux, params, spectrum, flux, flux_error, init);
+}
+
+/* jltable (add): xillverD-5 reflection table, interpolated in Julia */
+void jltable(const double *energy, int nflux, const double *params, int spectrum,
+           double *flux, double *flux_error, const char *init)
+{
+    ensure_julia_started();
+    juliaxspec_evaluate("jltable", energy, nflux, params, spectrum, flux, flux_error, init);
+}
+
+/* jltableblur (add): xillver reflection blurred by a Gaussian in g, on the table energy grid */
+void jltableblur(const double *energy, int nflux, const double *params, int spectrum,
+               double *flux, double *flux_error, const char *init)
+{
+    ensure_julia_started();
+    juliaxspec_evaluate("jltableblur", energy, nflux, params, spectrum, flux, flux_error, init);
+}

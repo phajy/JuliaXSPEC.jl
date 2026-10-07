@@ -352,4 +352,116 @@ end
     empty!(JuliaXSPEC.REGISTRY)
 end
 
+@testset "FFT convolution" begin
+    @test convolution_method() === :direct
+    withenv("JULIAXSPEC_CONVOLVE" => "fft") do
+        @test convolution_method() === :fft
+    end
+    withenv("JULIAXSPEC_CONVOLVE" => "nope") do
+        @test_throws ArgumentError convolution_method()
+    end
+
+    edges = collect(logrange(1.0, 20.0, 257))
+    spectrum = BinnedSpectrum(edges, gaussian_per_bin(edges, 6.4, 0.2))
+    kernel = GaussianKernel(0.05)
+    direct = convolve(spectrum, kernel; method = :direct)
+    fast = convolve(spectrum, kernel; method = :fft)
+    @test fast.per_bin ≈ convolve_fft(spectrum, kernel).per_bin
+    rel = sum(abs.(direct.per_bin .- fast.per_bin)) / sum(direct.per_bin)
+    @test rel < 1e-3
+    @test sum(fast.per_bin) ≈ 1 atol = 1e-4
+    @test all(fast.per_bin .>= 0)
+end
+
+@testset "Grid cache on disk and under a memory budget" begin
+    dir = mktempdir()
+    calls = Ref(0)
+    withenv("JULIAXSPEC_CACHE_DIR" => dir) do
+        g = GridInterpolator((x = [0.0, 1.0],); cache = "phase2-disk") do x
+            calls[] += 1
+            [x, 2x]
+        end
+        @test g(0.0) == [0.0, 0.0]
+        @test g(1.0) == [1.0, 2.0]
+        @test calls[] == 2
+        empty_cache!(g)
+        @test g(0.0) == [0.0, 0.0]
+        @test calls[] == 2
+        @test disk_loads(g) == 1
+
+        g2 = GridInterpolator((x = [0.0, 1.0],); cache = "phase2-disk") do x
+            calls[] += 1
+            [x, 2x]
+        end
+        @test g2(1.0) == [1.0, 2.0]
+        @test calls[] == 2
+        @test disk_loads(g2) == 1
+
+        # A different grid under the same name must not reuse the old files.
+        g3 = GridInterpolator((x = [0.0, 2.0],); cache = "phase2-disk") do x
+            calls[] += 1
+            [10x]
+        end
+        @test g3(0.0) == [0.0]
+        @test calls[] == 3
+    end
+    @test_throws ArgumentError GridInterpolator((x = [0.0, 1.0],); cache = "has a space") do x
+        [x]
+    end
+
+    for w in copy(JuliaXSPEC.LIVE_CACHES)
+        c = w.value
+        c === nothing || empty_cache!(c)
+    end
+    @test cache_memory_used_bytes() == 0
+    calls2 = Ref(0)
+    limit_gb = 32 / 2^30          # two corners of two Float64s
+    withenv("JULIAXSPEC_CACHE_LIMIT_GB" => string(limit_gb)) do
+        h = GridInterpolator((x = [0.0, 1.0, 2.0, 3.0],)) do x
+            calls2[] += 1
+            [x, x]
+        end
+        h(0.0)
+        h(1.0)
+        h(2.0)
+        @test cache_stats(h).stored == 2
+        @test calls2[] == 3
+        h(0.0)                    # the oldest corner was dropped
+        @test calls2[] == 4
+    end
+end
+
+@testset "OGIP table models" begin
+    edges = collect(range(1.0, 5.0, length = 5))
+    parameters = [
+        Parameter("p", 1.5; min = 1.0, max = 2.0, delta = 0.1),
+        Parameter("q", 3.0; min = 1.0, max = 10.0, delta = 0.1),
+    ]
+    # spectra[energy, q, p], values p + 10q at the integer corner labels
+    spectra = zeros(Float32, 4, 2, 2)
+    for ip in 1:2, iq in 1:2
+        spectra[:, iq, ip] .= ip + 10 * iq
+    end
+    path = tempname() * ".fits"
+    write_ogip_table(path, spectra; name = "toy", parameters, axes = [[1.0, 2.0], [1.0, 10.0]], methods = [0, 1], edges)
+    table = OGIPTable(path)
+    @test table.name == "toy"
+    @test table.interpolator.axes[1].scale == :linear
+    @test table.interpolator.axes[2].scale == :log
+    @test table(1.0, 1.0) ≈ fill(11.0, 4)
+    @test table(2.0, 10.0) ≈ fill(22.0, 4)
+    # Halfway in p, and halfway in log q, is the mean of the four corners.
+    @test table(1.5, sqrt(10)) ≈ fill(16.5, 4)
+    @test table(-1.0, 100.0) ≈ table(1.0, 10.0)          # clamped to the grid
+
+    model = Blurred("toyblur", () -> table,
+        [Parameter("SigmaG", 0.05; min = 1e-3, max = 0.5, delta = 0.01)],
+        table.parameters; method = :direct) do kernel
+        GaussianKernel(kernel.SigmaG)
+    end
+    got = evaluate(model, edges, [0.05, 1.0, 1.0])
+    source = BinnedSpectrum(table.edges, table(1.0, 1.0))
+    @test got ≈ convolve(source, GaussianKernel(0.05); out_edges = edges, method = :direct).per_bin
+end
+
 end
