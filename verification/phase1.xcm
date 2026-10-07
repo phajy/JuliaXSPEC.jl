@@ -1,0 +1,63 @@
+# Phase 1 verification: evaluate pairs of models on the same energy grid and
+# write the model values to output/ for verification/compare.jl.
+#
+# Run from the verification/ directory, after both build steps:
+#   xspec - phase1.xcm
+#
+# Each output file has three columns: bin centre (keV), bin half-width (keV),
+# model photons / cm^2 / s / keV (what XSPEC's `plot model` shows).
+
+lmod juliaxspec ../xspec
+dummyrsp 0.1 50 2000 log
+setplot energy
+cpd /null
+
+proc dump {file} {
+    plot model
+    tclout plot model x
+    set x $xspec_tclout
+    tclout plot model xerr
+    set dx $xspec_tclout
+    tclout plot model y
+    set y $xspec_tclout
+    set f [open $file w]
+    foreach xi $x dxi $dx yi $y { puts $f "$xi $dxi $yi" }
+    close $f
+    puts "wrote $file"
+}
+
+file mkdir output
+
+# 1. Direct evaluation: jlgauss must equal XSPEC's gaussian.
+model gaussian & 6.4 & 0.3 & 1 & /*
+dump output/gaussian_6.4_0.3.dat
+model jlgauss & 6.4 & 0.3 & 1 & /*
+dump output/jlgauss_6.4_0.3.dat
+
+# 2. Grid interpolation: jlgausscached against the direct model, at a line
+#    energy between grid points (grid step 0.05 keV), for a broad and a
+#    narrow line.
+model jlgauss & 6.43 & 0.3 & 1 & /*
+dump output/jlgauss_6.43_0.3.dat
+model jlgausscached & 6.43 & 0.3 & 1 & /*
+dump output/jlgausscached_6.43_0.3.dat
+model jlgauss & 6.43 & 0.07 & 1 & /*
+dump output/jlgauss_6.43_0.07.dat
+model jlgausscached & 6.43 & 0.07 & 1 & /*
+dump output/jlgausscached_6.43_0.07.dat
+
+# 3. Convolution: a Gaussian blur in g of width 0.05 applied to a narrow line
+#    at 6.4 keV is a Gaussian line of width sqrt((0.05*6.4)^2 + 0.01^2).
+model jlgconv*gaussian & 0.05 & 6.4 & 0.01 & 1 & /*
+dump output/jlgconv_0.05_gaussian_6.4_0.01.dat
+model gaussian & 6.4 & 0.320156 & 1 & /*
+dump output/gaussian_6.4_0.320156.dat
+
+# 4. Convolution of a power law: same slope, normalisation scaled by
+#    the integral of L(g) g^(Gamma-1), which compare.jl computes.
+model jlgconv*powerlaw & 0.05 & 2.5 & 1 & /*
+dump output/jlgconv_0.05_powerlaw_2.5.dat
+model powerlaw & 2.5 & 1 & /*
+dump output/powerlaw_2.5.dat
+
+exit

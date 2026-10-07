@@ -50,7 +50,8 @@ Base.@ccallable function juliaxspec_evaluate(
         if verbose()
             settings = join(["$(p.name)=$(v)" for (p, v) in zip(model.parameters, values)], ", ")
             elapsed = round((time() - started) * 1e3; digits = 2)
-            println("JuliaXSPEC: $(model.name)($settings) on $n bins, $(edges[1])-$(edges[end]) keV, $elapsed ms")
+            lo, hi = round(edges[1]; sigdigits = 4), round(edges[end]; sigdigits = 4)
+            println("JuliaXSPEC: $(model.name)($settings) on $n bins, $lo-$hi keV, $elapsed ms")
             flush(stdout)
         end
         return Cint(0)

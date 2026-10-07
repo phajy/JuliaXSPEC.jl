@@ -17,11 +17,14 @@ On top of that it provides two building blocks for expensive models:
 The package is deliberately readable: each idea has the simplest correct
 implementation first, and faster versions are added alongside, never instead.
 
+**Documentation:** [dev](https://phajy.github.io/JuliaXSPEC.jl/dev/)
+
 ## Status
 
-Phase 1 (in progress): core bridge, grid cache, direct convolution, three
-reference models (`jlgauss`, `jlgausscached`, `jlgconv`) verified against
-XSPEC's built-in `gaussian`.
+Phase 1 complete: the XSPEC bridge, `GridInterpolator`, the direct
+convolution, and three reference models (`jlgauss`, `jlgausscached`,
+`jlgconv`) that run inside XSPEC and agree with XSPEC's built-in `gaussian`
+and `powerlaw` to the expected precision (see the Verification page).
 
 Planned: OGIP table models, FFT convolution, relativistic blurring via an
 optional [Gradus.jl](https://codeberg.org/astro-group/Gradus.jl) extension,

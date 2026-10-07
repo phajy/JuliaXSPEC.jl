@@ -3,7 +3,7 @@
 
 """
     Parameter(name, default; unit = "", min, max, soft_min = min, soft_max = max,
-              delta = (max - min) / 100, frozen = false, kind = :fit)
+              delta = 1% of the range, frozen = false, kind = :fit)
 
 One fit parameter of an XSPEC model, as it will appear in `model.dat`.
 
@@ -36,7 +36,7 @@ function Parameter(
     max::Real,
     soft_min::Real = min,
     soft_max::Real = max,
-    delta::Real = (max - min) / 100,
+    delta::Real = round((max - min) / 100; sigdigits = 2),
     frozen::Bool = false,
     kind::Symbol = :fit,
 )

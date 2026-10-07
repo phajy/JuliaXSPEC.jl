@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['*']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['1.13']
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+
+  # The model set compiles against this checkout of JuliaXSPEC; make sure it
+  # still loads and that the generated XSPEC files match what is committed.
+  models:
+    name: Model set and generated files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.13'
+      - uses: julia-actions/cache@v2
+      - name: Load the model set and regenerate xspec/
+        run: |
+          julia --project=models -e 'using Pkg; Pkg.develop(path = "."); Pkg.instantiate()'
+          julia --project=models -e '
+            using JuliaXSPEC, JuliaXSPECModels
+            write_xspec_package("xspec")
+            println(model_dat_text())'
+      - name: Generated files are up to date
+        run: git diff --exit-code -- xspec/model.dat xspec/juliaxspec_wrappers.c

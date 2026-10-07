@@ -120,7 +120,8 @@ Total number of grid corners (the most that could ever be computed).
 """
 grid_size(g::GridInterpolator) = prod(length.(g.axes))
 
-function (g::GridInterpolator{F, N})(x::Vararg{Real, N}) where {F, N}
+function (g::GridInterpolator{F, N})(x::Vararg{Real}) where {F, N}
+    length(x) == N || throw(ArgumentError("expected $N parameter(s) $(g.names), got $(length(x))"))
     brackets = ntuple(i -> bracket(g.axes[i], x[i]), N)
     result = nothing
     # Visit the 2^N corners: on each axis pick the lower (1) or upper (2) grid point.
@@ -137,8 +138,6 @@ function (g::GridInterpolator{F, N})(x::Vararg{Real, N}) where {F, N}
     end
     return result
 end
-
-(g::GridInterpolator{F, N})(x) where {F, N} = throw(ArgumentError("expected $N parameters $(g.names), got 1"))
 
 "The cached value of `f` at one grid corner, computing it on first use."
 function corner_value(g::GridInterpolator{F, N}, index::NTuple{N, Int}) where {F, N}

@@ -1,0 +1,10 @@
+jlgauss 2 0. 1.e20 c_jlgauss add 0
+LineE keV 6.4 0.0 0.0 1.0e6 1.0e6 0.05
+Sigma keV 0.1 0.0 0.0 10.0 20.0 0.05
+
+jlgausscached 2 0. 1.e20 c_jlgausscached add 0
+LineE keV 6.4 5.0 5.0 8.0 8.0 0.05
+Sigma keV 0.3 0.05 0.05 1.0 1.0 0.01
+
+jlgconv 1 0. 1.e20 c_jlgconv con 0
+SigmaG " " 0.05 0.001 0.001 0.5 0.5 0.005

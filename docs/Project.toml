@@ -1,0 +1,9 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+JuliaXSPEC = "3c005aca-6691-4949-923b-87defb3ec510"
+
+[sources]
+JuliaXSPEC = {path = "/Users/phajy/GitHub/JuliaXSPEC.jl"}
+
+[compat]
+Documenter = "1"

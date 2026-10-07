@@ -1,0 +1,13 @@
+name = "JuliaXSPECModels"
+uuid = "5a88085a-9949-4f43-895d-693b85a89965"
+version = "0.1.0"
+authors = ["Andy Young <andy.young@bristol.ac.uk>"]
+
+[deps]
+JuliaXSPEC = "3c005aca-6691-4949-923b-87defb3ec510"
+
+[sources]
+JuliaXSPEC = {path = ".."}
+
+[compat]
+julia = "1.13"

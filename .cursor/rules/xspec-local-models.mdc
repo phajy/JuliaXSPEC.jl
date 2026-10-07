@@ -1,0 +1,38 @@
+---
+description: How JuliaXSPEC bridges XSPEC and Julia, and the build workflow
+globs: src/**,models/**,scripts/**,xspec/**,build-julia.sh,build-xspec.sh,verification/**
+alwaysApply: false
+---
+
+# JuliaXSPEC: XSPEC local models written in Julia
+
+References:
+- [XSPEC Appendix C: Adding Models to XSPEC](https://heasarc.gsfc.nasa.gov/docs/software/xspec/manual/XSappendixLocal.html) (`model.dat`, `initpackage`, `hmake`, `lmod`)
+- [OGIP 92-009 table model format](https://heasarc.gsfc.nasa.gov/FTP/caldb/docs/memos/ogip_92_009/ogip_92_009.pdf)
+- [PackageCompiler.jl `create_library`](https://julialang.github.io/PackageCompiler.jl/stable/libs.html)
+
+## Conventions that must not drift
+
+- A model returns **photons cm⁻² s⁻¹ per bin** (`BinnedSpectrum.per_bin`), never a density. `density`/`from_density` convert explicitly. See `docs/src/units.md`.
+- Convolution kernels `L(g)` have **unit area in g** (photon conservation). See `docs/src/convolution.md` for the derivation that the code follows.
+- XSPEC reads the `model.dat` init string as a **single token**; configuration goes through `JULIAXSPEC_*` environment variables (`src/options.jl`).
+- C wrapper names are the model name with underscores removed; `model.dat` refers to them as `c_<name>`.
+- `register!` must be called from a module's `__init__`, not at top level (precompilation).
+
+## Architecture
+
+- `src/entry.jl`: the single `@ccallable juliaxspec_evaluate`; never lets an exception reach C.
+- `src/registry.jl`: registry plus generation of `xspec/model.dat` and `xspec/juliaxspec_wrappers.c`. Both generated files are tracked; CI checks they match the models.
+- `models/`: the model set compiled into `build/lib/libjuliaxspec_models`. Add models there (or in a dependent package) and rebuild.
+- `scripts/compile.jl`: PackageCompiler build; `scripts/patch_xspec_makefile.jl`: adds our link flags to the Makefile `initpackage` writes.
+
+## Build and verify
+
+```sh
+./build-julia.sh      # Julia only: compile models, write xspec/model.dat and wrappers
+./build-xspec.sh      # HEADAS required: initpackage + patch + hmake in xspec/
+xspec                 # lmod juliaxspec xspec
+cd verification && xspec - phase1.xcm && julia --project=. compare.jl
+```
+
+Rebuild the Julia library after any change in `src/` or `models/`; rebuild the XSPEC package only when `model.dat` changes. Keep platform-specific workarounds out of the build scripts unless a reproducible failure requires one.
