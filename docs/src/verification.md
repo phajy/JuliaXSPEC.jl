@@ -106,6 +106,9 @@ Gamma, iron, ionisation and density grid points, and halfway between two
 inclination points, so this checks the interpolation as well as the file
 reader. The two spectra are identical, bin for bin: the largest difference is
 zero. XSPEC's `atable` also has a redshift parameter, left at zero here.
+The upper panel is log–log; bins that are exactly zero are drawn at
+``10^{-6}`` of the peak so the axis can show them. The residual uses the
+unmodified spectra and is identically zero.
 
 ![jltable against atable](assets/verification_jltable.png)
 

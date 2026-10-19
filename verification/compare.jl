@@ -40,14 +40,16 @@ function report(label, test, reference; tol, mask = trues(length(test)))
     return worst
 end
 
-function overlay(title, E, curves, ylabel; residual = nothing, legend = :topright, residual_ylims = nothing)
-    top = plot(; title, ylabel, legend)
+function overlay(title, E, curves, ylabel; residual = nothing, legend = :topright, residual_ylims = nothing,
+        xscale = :identity, yscale = :identity)
+    top = plot(; title, ylabel, legend, xscale, yscale)
     for (name, y, style) in curves
         plot!(top, E, y; label = name, style...)
     end
     residual === nothing && return top
     bottom_kwargs = residual_ylims === nothing ? NamedTuple() : (; ylims = residual_ylims)
-    bottom = plot(E, residual.y; xlabel = "Energy (keV)", ylabel = residual.label, label = "", bottom_kwargs...)
+    bottom = plot(E, residual.y; xlabel = "Energy (keV)", ylabel = residual.label, label = "",
+        xscale, bottom_kwargs...)
     hline!(bottom, [0.0]; color = :gray, linestyle = :dash, label = "")
     return plot(top, bottom; layout = grid(2, 1, heights = [0.7, 0.3]), link = :x, size = (800, 600))
 end
@@ -119,11 +121,15 @@ jltable = read_model("jltable_default")
 report("jltable vs atable{xillverD-5} at the file's default parameters", jltable.density, atable.density; tol = 1e-3)
 window = 1.0 .< atable.E .< 20.0
 peak = maximum(atable.density[window])
+# Floor only the plotted curves. A reflection spectrum is zero in many bins,
+# and a log axis cannot show those zeros. The comparison itself is unchanged.
+floor = 1e-6 * peak
 savefig(
     overlay("jltable against XSPEC atable{xillverD-5}", atable.E[window],
-        [("atable", atable.density[window], (linewidth = 2, color = :black)),
-         ("jltable", jltable.density[window], (linewidth = 1.2, color = :orange, linestyle = :dash))],
+        [("atable", max.(atable.density[window], floor), (linewidth = 2, color = :black)),
+         ("jltable", max.(jltable.density[window], floor), (linewidth = 1.2, color = :orange, linestyle = :dash))],
         "photons / cm² / s / keV";
+        xscale = :log10, yscale = :log10,
         residual = (y = (jltable.density .- atable.density)[window] ./ peak, label = "(jltable − atable) / peak"),
         residual_ylims = (-1e-3, 1e-3)),
     joinpath(FIGS, "verification_jltable.png"))
