@@ -20,7 +20,25 @@ The package is written to be read. Each idea appears first in its simplest
 correct form; faster versions are added alongside, never instead, and are
 tested against the simple ones.
 
-## How the pieces fit together
+## The pieces
+
+Everything the package returns is a [`BinnedSpectrum`](@ref): photons per bin
+on a set of energy edges. An additive or multiplicative model computes that
+from the edges alone. A convolution model, and [`Blurred`](@ref), run the
+edges through [`convolve`](@ref). [`GridInterpolator`](@ref) and
+[`OGIPTable`](@ref) supply spectra that would otherwise be expensive or
+already tabulated.
+
+![Spectra, models, and convolution](assets/components.svg)
+
+GradusXSPEC and KerrzXSPEC are planned as separate packages in this
+repository. GradusXSPEC will call
+[Gradus.jl](https://codeberg.org/astro-group/Gradus.jl); KerrzXSPEC will call
+[kerrz](https://git.sr.ht/~fjebaker/kerrz). They are not dependencies of
+JuliaXSPEC. A later build will be able to compile either or both of them
+together with this package into one XSPEC library.
+
+## How a call from XSPEC gets there
 
 ```text
  XSPEC process                                   Julia (inside libjuliaxspec_models)
@@ -56,21 +74,22 @@ tested against the simple ones.
 - [Convolution](convolution.md) — a step-by-step account of blurring in ``g``.
 - [Caching on a grid](caching.md) — `GridInterpolator`.
 - [Writing a model](models.md) — the model types and the registry.
+- [Examples](examples.md) — additive, convolution, and cached models, from Julia.
 - [Verification](verification.md) — comparisons against XSPEC's built-in models.
 - [Reference](reference.md) — every exported function.
 
 ## Status and roadmap
 
-**Phase 2 (this release):** everything in phase 1, plus OGIP table models
-(`jltable`, checked against `atable`), FFT convolution checked against the
-direct matrix (`jlgconvfft`), disk persistence and a RAM budget for grid
-corners, and a composite blur on the table's own energy grid (`jltableblur`).
+**v0.2.0** is the core package. It evaluates additive, multiplicative, and
+convolution models, caches expensive spectra on a parameter grid, reads OGIP
+table models, and blurs a spectrum with a kernel in ``g``. The reference
+models `jlgauss`, `jlgausscached`, `jlgconv`, `jlgconvfft`, `jltable`, and
+`jltableblur` run inside XSPEC. `jltable` matches `atable{xillverD-5.fits}`
+exactly, and the FFT blur matches the direct matrix to a few parts in 10,000
+([Verification](verification.md)).
 
-**Planned:** relativistic kernels through an optional
-[Gradus.jl](https://codeberg.org/astro-group/Gradus.jl) extension, with
-verification against relxill; examples driving external tools such as
-[kerrz](https://git.sr.ht/~fjebaker/kerrz) and wrapping SpectralFitting.jl
-models.
+GradusXSPEC and KerrzXSPEC will be optional packages for relativistic kernels.
+They are not required to use JuliaXSPEC.
 
 JuliaXSPEC is a reimplementation, with a clearer separation of concerns, of
 the ideas first worked out in

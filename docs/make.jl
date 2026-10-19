@@ -20,6 +20,7 @@ makedocs(
             "Caching on a grid" => "caching.md",
         ],
         "Writing a model" => "models.md",
+        "Examples" => "examples.md",
         "Verification" => "verification.md",
         "Reference" => "reference.md",
     ],

@@ -7,15 +7,34 @@
   shell you build from (`source $HEADAS/headas-init.sh`). This provides
   `initpackage` and `hmake`, which XSPEC uses to build local models, and the
   C compiler configuration that goes with them.
-- A clone of this repository:
+There are two ways to get the package, and they are not the same thing.
+
+**The Julia package.** Once JuliaXSPEC is in the
+[AstroRegistry](https://github.com/astro-group-bristol/AstroRegistry), this
+installs the functions (`AdditiveModel`, `convolve`, `GridInterpolator`, and
+the rest) and nothing else:
+
+```julia
+using Pkg
+Pkg.Registry.add(url = "https://github.com/astro-group-bristol/AstroRegistry")
+Pkg.add("JuliaXSPEC")
+```
+
+That registry is not the General Julia registry. Registration happens after
+this version has been tested, so until then the clone below is the way to
+obtain the package.
+
+**The XSPEC library.** `Pkg.add` does not build the shared library XSPEC
+loads. That build uses the reference models and the compile scripts in this
+repository, so it starts from a clone:
 
 ```sh
 git clone https://github.com/phajy/JuliaXSPEC.jl
 cd JuliaXSPEC.jl
 ```
 
-Nothing else is needed for the reference models. Later phases will add
-optional dependencies (Gradus.jl, reflection tables) for the physics models.
+Nothing else is needed for the reference models. Gradus and kerrz will be
+separate packages, not dependencies of JuliaXSPEC.
 
 ## Step 1: compile the Julia models
 
