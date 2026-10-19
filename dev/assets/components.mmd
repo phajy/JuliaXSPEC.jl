@@ -1,0 +1,20 @@
+flowchart TD
+  edges["XSPEC energy bins"]
+  spectrum["BinnedSpectrum: photons per bin"]
+  addModel[AdditiveModel]
+  mulModel[MultiplicativeModel]
+  conModel[ConvolutionModel]
+  grid[GridInterpolator]
+  table[OGIPTable]
+  kernel[RedshiftKernel]
+  conv["convolve: direct or FFT"]
+  blurred[Blurred]
+  edges --> spectrum
+  spectrum --> addModel
+  spectrum --> mulModel
+  spectrum --> conModel
+  grid --> addModel
+  table --> blurred
+  kernel --> conv
+  conv --> conModel
+  conv --> blurred
