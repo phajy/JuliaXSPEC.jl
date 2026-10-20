@@ -1,0 +1,6 @@
+flowchart TD
+    params["parameter values"] --> grid["GridInterpolator"]
+    grid --> internal["photons per bin on the interpolator's own energy grid"]
+    internal --> reb["rebin"]
+    bins["XSPEC energy bins"] --> reb
+    reb --> out["photons in each XSPEC bin"]

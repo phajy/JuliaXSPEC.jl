@@ -1,0 +1,14 @@
+flowchart TD
+    xspec["XSPEC fit engine"]
+    wrap["C wrapper, one per model"]
+    entry["juliaxspec_evaluate"]
+    addmul["additive or multiplicative function"]
+    convf["convolution function"]
+    back["XSPEC flux buffer"]
+
+    xspec -->|"energy edges, parameters, flux buffer"| wrap
+    wrap -->|"model name; Julia is started on the first call"| entry
+    entry -->|"energy bins and parameters"| addmul
+    entry -->|"flux buffer as a spectrum, and parameters"| convf
+    addmul -->|"one number per bin"| back
+    convf -->|"spectrum on the same bins"| back
