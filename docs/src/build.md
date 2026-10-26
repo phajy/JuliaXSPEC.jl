@@ -9,20 +9,16 @@
   C compiler configuration that goes with them.
 There are two ways to get the package, and they are not the same thing.
 
-**The Julia package.** Once JuliaXSPEC is in the
-[AstroRegistry](https://github.com/astro-group-bristol/AstroRegistry), this
-installs the functions (`AdditiveModel`, `convolve`, `GridInterpolator`, and
-the rest) and nothing else:
+**The Julia package.** JuliaXSPEC is in the
+[AstroRegistry](https://github.com/astro-group-bristol/AstroRegistry), not the
+General registry. This installs the functions (`AdditiveModel`, `convolve`,
+`GridInterpolator`, and the rest) and nothing else:
 
 ```julia
 using Pkg
 Pkg.Registry.add(url = "https://github.com/astro-group-bristol/AstroRegistry")
 Pkg.add("JuliaXSPEC")
 ```
-
-That registry is not the General Julia registry. Registration happens after
-this version has been tested, so until then the clone below is the way to
-obtain the package.
 
 **The XSPEC library.** `Pkg.add` does not build the shared library XSPEC
 loads. That build uses the reference models and the compile scripts in this
@@ -102,6 +98,29 @@ after that, calls are as fast as the model itself.
 
 To load the package automatically in every session, add the `lmod` line with
 an absolute path to `~/.xspec/xspec.rc`.
+
+## The thin-disc lamppost
+
+`jllamp` smears whatever it multiplies by the line profile of a lamppost above
+a thin disc. From a clone of this repository, on the `GradusXSPEC` branch:
+
+```sh
+./build-julia.sh gradus
+./build-xspec.sh gradus
+```
+
+The first command downloads Gradus and takes several minutes. Load the library
+it prints, instead of the reference-model library, and in a new XSPEC session:
+
+```text
+model jllamp * gaussian
+```
+
+The parameters are spin (0.2 to 0.998), inclination in degrees (10 to 60), and
+lamp height in gravitational radii (3 to 20). The profile is calculated at a
+handful of those values and blended in between. The first time a combination
+is needed it can take a few minutes, and is then remembered. A session can
+load only one of these libraries.
 
 ## Configuration
 

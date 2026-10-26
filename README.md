@@ -10,6 +10,30 @@ bin-integrated bookkeeping written out explicitly.
 
 **Documentation:** [dev](https://phajy.github.io/JuliaXSPEC.jl/dev/)
 
+## A relativistic line in XSPEC
+
+`jllamp` smears a spectrum with the line profile of a lamppost above a thin disc. The steps below are the whole procedure. They need [Julia 1.13](https://julialang.org/downloads/) and HEASOFT. In the terminal you use for the build, `HEADAS` has to be set (`source $HEADAS/headas-init.sh`). Nothing else about Julia or Gradus is required.
+
+```sh
+git clone https://github.com/phajy/JuliaXSPEC.jl
+cd JuliaXSPEC.jl
+git checkout GradusXSPEC
+./build-julia.sh gradus
+./build-xspec.sh gradus
+```
+
+The first build takes several minutes. It downloads Gradus and calculates the line profile once. The script then prints an `lmod` line. Start XSPEC and paste that line, then:
+
+```text
+model jllamp * gaussian
+```
+
+`gaussian` is a narrow line and `jllamp` smears it. To smear a power law instead, use `model jllamp * powerlaw`.
+
+The three `jllamp` numbers are the black-hole spin (0.2 to 0.998), the disc inclination in degrees (10 to 60), and the lamp height in gravitational radii (3 to 20). The profile is calculated at a handful of those values and blended in between. The first time a new combination is needed it can take a few minutes. The same combination after that is quick, including in a later XSPEC session.
+
+Only one JuliaXSPEC library can be loaded in an XSPEC session. Use the `lmod` line from the build you want. A session that loaded the reference-model library has to be restarted before loading this one.
+
 ## The pieces
 
 XSPEC has three model types, and a Julia function has to match the one it is
@@ -177,10 +201,7 @@ flowchart TD
 the direct matrix to a few parts in 10,000. The FITS file is not part of the
 package; the tests read a local copy.
 
-GradusXSPEC and KerrzXSPEC will be optional packages in this repository, for
-people who want those kernels. They are not dependencies of JuliaXSPEC. A
-later build will be able to compile either or both of them together with this
-package into one XSPEC library.
+GradusXSPEC, in this repository, adds `jllamp`: a thin-disc lamppost convolution. It is not a dependency of JuliaXSPEC. `./build-julia.sh gradus` compiles it into its own library, together with the reference models, and that library is loaded instead of the reference-model library. KerrzXSPEC will follow the same pattern.
 
 ## A model in three lines
 
@@ -205,7 +226,7 @@ julia --project=. examples/grid.jl
 
 ## Installing
 
-**The Julia package.** Once this version is in the
+**The Julia package.** This is in the
 [AstroRegistry](https://github.com/astro-group-bristol/AstroRegistry), not the
 General registry:
 
@@ -215,9 +236,8 @@ Pkg.Registry.add(url = "https://github.com/astro-group-bristol/AstroRegistry")
 Pkg.add("JuliaXSPEC")
 ```
 
-That install does not include the shared library XSPEC loads. It is also not
-available until the package has been registered. Until then, clone the
-repository.
+That install does not include the shared library XSPEC loads. Building the
+library starts from a clone, below.
 
 **The XSPEC library.** Building it needs the reference models and the compile
 scripts, so start from a clone. Requirements: Julia 1.13 and HEASOFT with

@@ -151,12 +151,10 @@ the direct matrix to a few parts in 10,000
 ([Verification](verification.md)). The FITS file is not part of the package;
 the tests read a local copy.
 
-GradusXSPEC and KerrzXSPEC are planned as separate packages in this
-repository. GradusXSPEC will call
-[Gradus.jl](https://codeberg.org/astro-group/Gradus.jl); KerrzXSPEC will call
-[kerrz](https://git.sr.ht/~fjebaker/kerrz). They are not dependencies of
-JuliaXSPEC. A later build will be able to compile either or both of them
-together with this package into one XSPEC library.
+GradusXSPEC, in this repository, adds `jllamp`: a thin-disc lamppost
+convolution compiled by `./build-julia.sh gradus`. That library is loaded
+instead of the reference-model library. KerrzXSPEC will follow the same
+pattern. Neither is a dependency of JuliaXSPEC.
 
 ## How a call from XSPEC gets there
 
@@ -212,8 +210,11 @@ models `jlgauss`, `jlgausscached`, `jlgconv`, `jlgconvfft`, `jltable`, and
 exactly, and the FFT blur matches the direct matrix to a few parts in 10,000
 ([Verification](verification.md)).
 
-GradusXSPEC and KerrzXSPEC will be optional packages for relativistic kernels.
-They are not required to use JuliaXSPEC.
+GradusXSPEC, in this repository, provides `jllamp`, a thin-disc lamppost
+convolution. Build it with `./build-julia.sh gradus` and load that library
+instead of the reference-model library
+([Installation and build](build.md)). It is not required to use JuliaXSPEC.
+KerrzXSPEC will follow the same pattern.
 
 JuliaXSPEC is a reimplementation, with a clearer separation of concerns, of
 the ideas first worked out in
