@@ -30,7 +30,9 @@ model jllamp * gaussian
 
 `gaussian` is a narrow line and `jllamp` smears it. To smear a power law instead, use `model jllamp * powerlaw`.
 
-The three `jllamp` numbers are the black-hole spin (0.2 to 0.998), the disc inclination in degrees (10 to 60), and the lamp height in gravitational radii (3 to 20). The profile is calculated at a handful of those values and blended in between. The first time a new combination is needed it can take a few minutes. The same combination after that is quick, including in a later XSPEC session.
+`jllampxill` is that same lamppost blurring the xillver reflection table. Put `xillverD-5.fits` in the repository folder (or point `JULIAXSPEC_TABLE_DIR` at the folder that contains it) and, in XSPEC, `model jllampxill`. The first three numbers are the lamppost. The next five are the table: photon index, iron abundance, ionisation, density, and the table's own inclination. That last angle is not the lamppost inclination.
+
+The three lamppost numbers, for either model, are the black-hole spin (0.2 to 0.998), the disc inclination in degrees (10 to 60), and the lamp height in gravitational radii (3 to 20). The profile is calculated at a handful of those values and blended in between. The first time a new combination is needed it can take a few minutes. The same combination after that is quick, including in a later XSPEC session.
 
 Only one JuliaXSPEC library can be loaded in an XSPEC session. Use the `lmod` line from the build you want. A session that loaded the reference-model library has to be restarted before loading this one.
 
@@ -201,7 +203,7 @@ flowchart TD
 the direct matrix to a few parts in 10,000. The FITS file is not part of the
 package; the tests read a local copy.
 
-GradusXSPEC, in this repository, adds `jllamp`: a thin-disc lamppost convolution. It is not a dependency of JuliaXSPEC. `./build-julia.sh gradus` compiles it into its own library, together with the reference models, and that library is loaded instead of the reference-model library. KerrzXSPEC will follow the same pattern.
+GradusXSPEC, in this repository, adds `jllamp`: a thin-disc lamppost convolution, and `jllampxill`, that kernel blurring the xillver table. Neither is a dependency of JuliaXSPEC. `./build-julia.sh gradus` compiles them into their own library, together with the reference models, and that library is loaded instead of the reference-model library. KerrzXSPEC will follow the same pattern.
 
 ## A model in three lines
 

@@ -4,11 +4,11 @@
 Relativistic kernels from [Gradus.jl](https://codeberg.org/astro-group/Gradus.jl),
 registered as JuliaXSPEC models.
 
-The first model is `jllamp`: a lamppost on the spin axis above a thin disc.
-It is a convolution, so in XSPEC it smears whatever component it multiplies
-(`jllamp * gaussian`, `jllamp * powerlaw`). The line profile is calculated on
-a small grid of spin, inclination and height and remembered, on disk, under
-the cache name `jllamp-thin-v2`.
+`jllamp` is the convolution: in XSPEC it smears whatever component it
+multiplies (`jllamp * gaussian`, `jllamp * powerlaw`). `jllampxill` is the
+same kernel blurring `xillverD-5.fits` on the table's own energy grid. The
+line profile is calculated on a small grid of spin, inclination and height
+and remembered, on disk, under the cache name `jllamp-thin-v2`.
 """
 module GradusXSPEC
 
@@ -74,21 +74,42 @@ const LAMP_PROFILES = GridInterpolator(
     lamppost_profile(spin, inc, h)
 end
 
+const LAMP_PARAMETERS = [
+    Parameter("spin", 0.8; min = 0.2, max = 0.998, delta = 0.05),
+    Parameter("inc", 30.0; unit = "degrees", min = 10.0, max = 60.0, delta = 5.0),
+    Parameter("h", 10.0; unit = "GM/c^2", min = 3.0, max = 20.0, delta = 1.0),
+]
+
+"The cached lamppost line profile as a unit-area kernel in g."
+function lamppost_kernel(p)
+    L = max.(LAMP_PROFILES(p.spin, p.inc, p.h), 0.0)
+    return RedshiftKernel(G_GRID, L)
+end
+
 const jllamp = ConvolutionModel(
     "jllamp",
-    [
-        Parameter("spin", 0.8; min = 0.2, max = 0.998, delta = 0.05),
-        Parameter("inc", 30.0; unit = "degrees", min = 10.0, max = 60.0, delta = 5.0),
-        Parameter("h", 10.0; unit = "GM/c^2", min = 3.0, max = 20.0, delta = 1.0),
-    ];
+    LAMP_PARAMETERS;
     description = "Thin-disc lamppost blur. Profiles are cached on a coarse grid.",
 ) do spectrum, p
-    L = max.(LAMP_PROFILES(p.spin, p.inc, p.h), 0.0)
-    convolve(spectrum, RedshiftKernel(G_GRID, L); method = :fft)
+    convolve(spectrum, lamppost_kernel(p); method = :fft)
+end
+
+# Kernel parameters first, then the xillver parameters. `inc` is the lamppost
+# observer angle; `Incl` is the angle stored in the reflection table.
+const jllampxill = Blurred(
+    "jllampxill",
+    JuliaXSPECModels.xillver_table,
+    LAMP_PARAMETERS,
+    JuliaXSPECModels.XILLVER_PARAMETERS;
+    description = "xillverD-5 blurred by the thin-disc lamppost, on the table energy grid",
+    method = :fft,
+) do kernel
+    lamppost_kernel(kernel)
 end
 
 function __init__()
     register!(jllamp)
+    register!(jllampxill)
 end
 
 end

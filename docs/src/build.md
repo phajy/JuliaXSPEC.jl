@@ -116,11 +116,17 @@ it prints, instead of the reference-model library, and in a new XSPEC session:
 model jllamp * gaussian
 ```
 
-The parameters are spin (0.2 to 0.998), inclination in degrees (10 to 60), and
-lamp height in gravitational radii (3 to 20). The profile is calculated at a
-handful of those values and blended in between. The first time a combination
-is needed it can take a few minutes, and is then remembered. A session can
-load only one of these libraries.
+`jllampxill` blurs `xillverD-5.fits` with that same kernel, on the table's own
+energy grid. The file goes in the repository folder, or in the folder named by
+`JULIAXSPEC_TABLE_DIR`. In XSPEC, `model jllampxill`. Its first three parameters
+are the lamppost; the next five are the table, including the table inclination,
+which is separate from the lamppost inclination.
+
+The lamppost parameters are spin (0.2 to 0.998), inclination in degrees (10 to
+60), and lamp height in gravitational radii (3 to 20). The profile is
+calculated at a handful of those values and blended in between. The first time
+a combination is needed it can take a few minutes, and is then remembered. A
+session can load only one of these libraries.
 
 ## Configuration
 
