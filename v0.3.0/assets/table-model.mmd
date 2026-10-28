@@ -1,0 +1,6 @@
+flowchart TD
+    params["table parameters"] --> table["OGIPTable"]
+    table --> spec["photons per bin on the table's energy grid"]
+    spec --> reb["rebin"]
+    bins["XSPEC energy bins"] --> reb
+    reb --> out["photons in each XSPEC bin"]

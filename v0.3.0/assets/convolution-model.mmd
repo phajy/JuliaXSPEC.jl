@@ -1,0 +1,5 @@
+flowchart TD
+    spec["spectrum XSPEC has already computed, on XSPEC's bins"] --> conv["convolve: direct matrix or FFT"]
+    kparams["kernel parameters"] --> kernel["kernel in g"]
+    kernel --> conv
+    conv --> out["blurred photons, on those same bins"]
