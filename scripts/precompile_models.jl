@@ -7,7 +7,7 @@ edges = collect(logrange(0.1, 50.0, 1001))
 for model in registered_models()
     # The table is a gigabyte and is not in every checkout. Skip it quietly
     # here; the first XSPEC evaluation will say if the file cannot be found.
-    if model.name in ("jltable", "jltableblur")
+    if model.name in ("jltable", "jltableblur", "jllampxill", "jlringxill")
         try
             resolve_table_path("xillverD-5.fits")
         catch

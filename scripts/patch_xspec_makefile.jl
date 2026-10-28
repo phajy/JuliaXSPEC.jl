@@ -5,10 +5,10 @@
 #   julia scripts/patch_xspec_makefile.jl [xspec/Makefile]
 
 const ROOT = dirname(@__DIR__)
-const LIB_DIR = joinpath(ROOT, "build", "lib")
 const MARKER = "-ljuliaxspec_models"
 
 makefile = isempty(ARGS) ? joinpath(ROOT, "xspec", "Makefile") : ARGS[1]
+const LIB_DIR = length(ARGS) >= 2 ? ARGS[2] : joinpath(ROOT, "build", "lib")
 isfile(makefile) || error("$makefile not found: run initpackage first (see build-xspec.sh)")
 
 lines = readlines(makefile)

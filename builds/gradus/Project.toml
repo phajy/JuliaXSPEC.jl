@@ -1,0 +1,14 @@
+[deps]
+GradusXSPEC = "400afec4-0316-44c1-a231-f9170cefc86c"
+JuliaXSPEC = "3c005aca-6691-4949-923b-87defb3ec510"
+JuliaXSPECModels = "5a88085a-9949-4f43-895d-693b85a89965"
+PackageCompiler = "9b87118b-4619-50d2-8e1e-99f35a4d4d9d"
+
+[sources]
+GradusXSPEC = {path = "../../GradusXSPEC"}
+JuliaXSPEC = {path = "../.."}
+JuliaXSPECModels = {path = "../../models"}
+
+[compat]
+PackageCompiler = "2"
+julia = "1.13"

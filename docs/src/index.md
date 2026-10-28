@@ -151,12 +151,12 @@ the direct matrix to a few parts in 10,000
 ([Verification](verification.md)). The FITS file is not part of the package;
 the tests read a local copy.
 
-GradusXSPEC and KerrzXSPEC are planned as separate packages in this
-repository. GradusXSPEC will call
-[Gradus.jl](https://codeberg.org/astro-group/Gradus.jl); KerrzXSPEC will call
-[kerrz](https://git.sr.ht/~fjebaker/kerrz). They are not dependencies of
-JuliaXSPEC. A later build will be able to compile either or both of them
-together with this package into one XSPEC library.
+GradusXSPEC, in this repository, adds a thin-disc lamppost (`jllamp`,
+`jllampxill`) and a co-rotating ring (`jlring`, `jlringxill`). The `xill`
+models blur the xillver table with that kernel. They are compiled by
+`./build-julia.sh gradus` and that library is loaded instead of the
+reference-model library. KerrzXSPEC will follow the same pattern. Neither is
+a dependency of JuliaXSPEC.
 
 ## How a call from XSPEC gets there
 
@@ -204,7 +204,7 @@ have been built.
 
 ## Status and roadmap
 
-**v0.2.0** is the core package. It evaluates additive, multiplicative, and
+**v0.3.0** is the core package plus a thin-disc lamppost and a co-rotating ring. It evaluates additive, multiplicative, and
 convolution models, caches expensive spectra on a parameter grid, reads OGIP
 table models, and blurs a spectrum with a kernel in ``g``. The reference
 models `jlgauss`, `jlgausscached`, `jlgconv`, `jlgconvfft`, `jltable`, and
@@ -212,8 +212,12 @@ models `jlgauss`, `jlgausscached`, `jlgconv`, `jlgconvfft`, `jltable`, and
 exactly, and the FFT blur matches the direct matrix to a few parts in 10,000
 ([Verification](verification.md)).
 
-GradusXSPEC and KerrzXSPEC will be optional packages for relativistic kernels.
-They are not required to use JuliaXSPEC.
+GradusXSPEC, in this repository, provides a thin-disc lamppost (`jllamp`,
+`jllampxill`) and a co-rotating ring (`jlring`, `jlringxill`). The `xill`
+models blur `xillverD-5.fits` with that kernel. Build them with
+`./build-julia.sh gradus` and load that library instead of the reference-model
+library ([Installation and build](build.md)). They are not required to use
+JuliaXSPEC. KerrzXSPEC will follow the same pattern.
 
 JuliaXSPEC is a reimplementation, with a clearer separation of concerns, of
 the ideas first worked out in

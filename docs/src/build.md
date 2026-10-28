@@ -9,20 +9,16 @@
   C compiler configuration that goes with them.
 There are two ways to get the package, and they are not the same thing.
 
-**The Julia package.** Once JuliaXSPEC is in the
-[AstroRegistry](https://github.com/astro-group-bristol/AstroRegistry), this
-installs the functions (`AdditiveModel`, `convolve`, `GridInterpolator`, and
-the rest) and nothing else:
+**The Julia package.** JuliaXSPEC is in the
+[AstroRegistry](https://github.com/astro-group-bristol/AstroRegistry), not the
+General registry. This installs the functions (`AdditiveModel`, `convolve`,
+`GridInterpolator`, and the rest) and nothing else:
 
 ```julia
 using Pkg
 Pkg.Registry.add(url = "https://github.com/astro-group-bristol/AstroRegistry")
 Pkg.add("JuliaXSPEC")
 ```
-
-That registry is not the General Julia registry. Registration happens after
-this version has been tested, so until then the clone below is the way to
-obtain the package.
 
 **The XSPEC library.** `Pkg.add` does not build the shared library XSPEC
 loads. That build uses the reference models and the compile scripts in this
@@ -102,6 +98,52 @@ after that, calls are as fast as the model itself.
 
 To load the package automatically in every session, add the `lmod` line with
 an absolute path to `~/.xspec/xspec.rc`.
+
+On Linux, `lmod` can fail with `GLIBCXX_3.4.30 not found`. Julia's C++ library
+is newer than `/lib64/libstdc++.so.6`, and XSPEC has already loaded the system
+copy. From the repository directory, before starting XSPEC, put the bundled
+library first on the path. For the reference models that directory is
+`build/lib/julia`. For the Gradus build it is `build/gradus/lib/julia`:
+
+```sh
+export LD_LIBRARY_PATH="$PWD/build/gradus/lib/julia:${LD_LIBRARY_PATH}"
+```
+
+Setting this inside the XSPEC prompt does not help.
+
+## The thin-disc lamppost
+
+`jllamp` smears whatever it multiplies by the line profile of a lamppost above
+a thin disc. From a clone of this repository:
+
+```sh
+./build-julia.sh gradus
+./build-xspec.sh gradus
+```
+
+The first command downloads Gradus and takes several minutes. Load the library
+it prints, instead of the reference-model library, and in a new XSPEC session:
+
+```text
+model jllamp * gaussian
+```
+
+`jllampxill` blurs `xillverD-5.fits` with that same kernel, on the table's own
+energy grid. The file goes in the repository folder, or in the folder named by
+`JULIAXSPEC_TABLE_DIR`. In XSPEC, `model jllampxill`. Its first three parameters
+are the lamppost; the next five are the table, including the table inclination,
+which is separate from the lamppost inclination.
+
+The lamppost parameters are spin (0.2 to 0.998), inclination in degrees (10 to
+60), and lamp height in gravitational radii (3 to 20). `jlring` is a
+co-rotating ring above the same disc, and `jlringxill` blurs the xillver table
+with it. The extra parameter is the ring radius (2 to 50), and the ring height
+starts at 2.5. In XSPEC, `model jlring * gaussian` or `model jlringxill`.
+
+Each profile is calculated at a handful of parameter values and blended in
+between. The first time a combination is needed it can take a few minutes, and
+a ring takes longer than a lamppost. It is then remembered. A session can load
+only one of these libraries.
 
 ## Configuration
 

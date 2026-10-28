@@ -2,13 +2,48 @@
 
 Write [XSPEC](https://heasarc.gsfc.nasa.gov/xanadu/xspec/) spectral models in Julia.
 
-**v0.2.0.** JuliaXSPEC evaluates additive, multiplicative, and convolution
+**v0.3.0.** JuliaXSPEC evaluates additive, multiplicative, and convolution
 models. A compiled library carries the Julia runtime into an XSPEC session.
 Expensive spectra can be cached on a parameter grid, and a spectrum can be
 blurred by a kernel in the energy ratio `g = E_obs / E_em`, with the
 bin-integrated bookkeeping written out explicitly.
 
 **Documentation:** [dev](https://phajy.github.io/JuliaXSPEC.jl/dev/)
+
+## A relativistic line in XSPEC
+
+`jllamp` smears a spectrum with the line profile of a lamppost above a thin disc. The steps below are the whole procedure. They need [Julia 1.13](https://julialang.org/downloads/) and HEASOFT. In the terminal you use for the build, `HEADAS` has to be set (`source $HEADAS/headas-init.sh`). Nothing else about Julia or Gradus is required.
+
+```sh
+git clone https://github.com/phajy/JuliaXSPEC.jl
+cd JuliaXSPEC.jl
+./build-julia.sh gradus
+./build-xspec.sh gradus
+```
+
+The first build takes several minutes. It downloads Gradus and calculates the line profile once. The script then prints an `lmod` line. Start XSPEC and paste that line, then:
+
+```text
+model jllamp * gaussian
+```
+
+On Linux, `lmod` can fail with `GLIBCXX_3.4.30 not found`. The system C++ library is older than the one shipped with Julia. From the repository directory, before starting XSPEC:
+
+```sh
+export LD_LIBRARY_PATH="$PWD/build/gradus/lib/julia:${LD_LIBRARY_PATH}"
+```
+
+The reference-model build uses `build/lib/julia` instead. Setting the variable inside the XSPEC prompt is too late: XSPEC has already loaded the system library.
+
+`gaussian` is a narrow line and `jllamp` smears it. To smear a power law instead, use `model jllamp * powerlaw`.
+
+`jllampxill` is that same lamppost blurring the xillver reflection table. Put `xillverD-5.fits` in the repository folder (or point `JULIAXSPEC_TABLE_DIR` at the folder that contains it) and, in XSPEC, `model jllampxill`. The first three numbers are the lamppost. The next five are the table: photon index, iron abundance, ionisation, density, and the table's own inclination. That last angle is not the lamppost inclination.
+
+`jlring` is a co-rotating ring above the same thin disc, and `jlringxill` blurs the xillver table with it. The extra number is the ring radius, in gravitational radii, from 2 to 50. The height for a ring starts at 2.5 rather than 3. In XSPEC, `model jlring * gaussian` or `model jlringxill`.
+
+The lamppost numbers are the black-hole spin (0.2 to 0.998), the disc inclination in degrees (10 to 60), and the lamp height in gravitational radii (3 to 20). A ring uses the same spin and inclination. Each profile is calculated at a handful of those values and blended in between. The first time a new combination is needed it can take a few minutes, and a ring takes longer than a lamppost. The same combination after that is quick, including in a later XSPEC session.
+
+Only one JuliaXSPEC library can be loaded in an XSPEC session. Use the `lmod` line from the build you want. A session that loaded the reference-model library has to be restarted before loading this one.
 
 ## The pieces
 
@@ -177,10 +212,7 @@ flowchart TD
 the direct matrix to a few parts in 10,000. The FITS file is not part of the
 package; the tests read a local copy.
 
-GradusXSPEC and KerrzXSPEC will be optional packages in this repository, for
-people who want those kernels. They are not dependencies of JuliaXSPEC. A
-later build will be able to compile either or both of them together with this
-package into one XSPEC library.
+GradusXSPEC, in this repository, adds a thin-disc lamppost (`jllamp`, `jllampxill`) and a co-rotating ring (`jlring`, `jlringxill`). The `xill` models blur the xillver table. None of these are dependencies of JuliaXSPEC. `./build-julia.sh gradus` compiles them into their own library, together with the reference models, and that library is loaded instead of the reference-model library. KerrzXSPEC will follow the same pattern.
 
 ## A model in three lines
 
@@ -205,7 +237,7 @@ julia --project=. examples/grid.jl
 
 ## Installing
 
-**The Julia package.** Once this version is in the
+**The Julia package.** This is in the
 [AstroRegistry](https://github.com/astro-group-bristol/AstroRegistry), not the
 General registry:
 
@@ -215,9 +247,8 @@ Pkg.Registry.add(url = "https://github.com/astro-group-bristol/AstroRegistry")
 Pkg.add("JuliaXSPEC")
 ```
 
-That install does not include the shared library XSPEC loads. It is also not
-available until the package has been registered. Until then, clone the
-repository.
+That install does not include the shared library XSPEC loads. Building the
+library starts from a clone, below.
 
 **The XSPEC library.** Building it needs the reference models and the compile
 scripts, so start from a clone. Requirements: Julia 1.13 and HEASOFT with
