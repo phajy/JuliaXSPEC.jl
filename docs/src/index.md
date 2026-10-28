@@ -151,11 +151,12 @@ the direct matrix to a few parts in 10,000
 ([Verification](verification.md)). The FITS file is not part of the package;
 the tests read a local copy.
 
-GradusXSPEC, in this repository, adds `jllamp`, a thin-disc lamppost
-convolution, and `jllampxill`, that kernel blurring the xillver table. They
-are compiled by `./build-julia.sh gradus` and that library is loaded instead
-of the reference-model library. KerrzXSPEC will follow the same pattern.
-Neither is a dependency of JuliaXSPEC.
+GradusXSPEC, in this repository, adds a thin-disc lamppost (`jllamp`,
+`jllampxill`) and a co-rotating ring (`jlring`, `jlringxill`). The `xill`
+models blur the xillver table with that kernel. They are compiled by
+`./build-julia.sh gradus` and that library is loaded instead of the
+reference-model library. KerrzXSPEC will follow the same pattern. Neither is
+a dependency of JuliaXSPEC.
 
 ## How a call from XSPEC gets there
 
@@ -211,11 +212,12 @@ models `jlgauss`, `jlgausscached`, `jlgconv`, `jlgconvfft`, `jltable`, and
 exactly, and the FFT blur matches the direct matrix to a few parts in 10,000
 ([Verification](verification.md)).
 
-GradusXSPEC, in this repository, provides `jllamp`, a thin-disc lamppost
-convolution, and `jllampxill`, that kernel blurring `xillverD-5.fits`. Build
-them with `./build-julia.sh gradus` and load that library instead of the
-reference-model library ([Installation and build](build.md)). They are not
-required to use JuliaXSPEC. KerrzXSPEC will follow the same pattern.
+GradusXSPEC, in this repository, provides a thin-disc lamppost (`jllamp`,
+`jllampxill`) and a co-rotating ring (`jlring`, `jlringxill`). The `xill`
+models blur `xillverD-5.fits` with that kernel. Build them with
+`./build-julia.sh gradus` and load that library instead of the reference-model
+library ([Installation and build](build.md)). They are not required to use
+JuliaXSPEC. KerrzXSPEC will follow the same pattern.
 
 JuliaXSPEC is a reimplementation, with a clearer separation of concerns, of
 the ideas first worked out in

@@ -123,10 +123,15 @@ are the lamppost; the next five are the table, including the table inclination,
 which is separate from the lamppost inclination.
 
 The lamppost parameters are spin (0.2 to 0.998), inclination in degrees (10 to
-60), and lamp height in gravitational radii (3 to 20). The profile is
-calculated at a handful of those values and blended in between. The first time
-a combination is needed it can take a few minutes, and is then remembered. A
-session can load only one of these libraries.
+60), and lamp height in gravitational radii (3 to 20). `jlring` is a
+co-rotating ring above the same disc, and `jlringxill` blurs the xillver table
+with it. The extra parameter is the ring radius (2 to 50), and the ring height
+starts at 2.5. In XSPEC, `model jlring * gaussian` or `model jlringxill`.
+
+Each profile is calculated at a handful of parameter values and blended in
+between. The first time a combination is needed it can take a few minutes, and
+a ring takes longer than a lamppost. It is then remembered. A session can load
+only one of these libraries.
 
 ## Configuration
 
