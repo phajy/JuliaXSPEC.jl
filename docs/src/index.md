@@ -204,7 +204,7 @@ have been built.
 
 ## Status and roadmap
 
-**v0.2.0** is the core package. It evaluates additive, multiplicative, and
+**v0.3.0** is the core package plus a thin-disc lamppost and a co-rotating ring. It evaluates additive, multiplicative, and
 convolution models, caches expensive spectra on a parameter grid, reads OGIP
 table models, and blurs a spectrum with a kernel in ``g``. The reference
 models `jlgauss`, `jlgausscached`, `jlgconv`, `jlgconvfft`, `jltable`, and

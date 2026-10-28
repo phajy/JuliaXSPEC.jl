@@ -114,7 +114,7 @@ Setting this inside the XSPEC prompt does not help.
 ## The thin-disc lamppost
 
 `jllamp` smears whatever it multiplies by the line profile of a lamppost above
-a thin disc. From a clone of this repository, on the `GradusXSPEC` branch:
+a thin disc. From a clone of this repository:
 
 ```sh
 ./build-julia.sh gradus

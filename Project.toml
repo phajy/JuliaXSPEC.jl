@@ -1,6 +1,6 @@
 name = "JuliaXSPEC"
 uuid = "3c005aca-6691-4949-923b-87defb3ec510"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Andy Young <andy.young@bristol.ac.uk>"]
 repo = "https://github.com/phajy/JuliaXSPEC.jl"
 

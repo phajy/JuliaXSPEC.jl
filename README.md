@@ -2,7 +2,7 @@
 
 Write [XSPEC](https://heasarc.gsfc.nasa.gov/xanadu/xspec/) spectral models in Julia.
 
-**v0.2.0.** JuliaXSPEC evaluates additive, multiplicative, and convolution
+**v0.3.0.** JuliaXSPEC evaluates additive, multiplicative, and convolution
 models. A compiled library carries the Julia runtime into an XSPEC session.
 Expensive spectra can be cached on a parameter grid, and a spectrum can be
 blurred by a kernel in the energy ratio `g = E_obs / E_em`, with the
@@ -17,7 +17,6 @@ bin-integrated bookkeeping written out explicitly.
 ```sh
 git clone https://github.com/phajy/JuliaXSPEC.jl
 cd JuliaXSPEC.jl
-git checkout GradusXSPEC
 ./build-julia.sh gradus
 ./build-xspec.sh gradus
 ```
