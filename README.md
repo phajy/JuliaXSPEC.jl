@@ -28,6 +28,14 @@ The first build takes several minutes. It downloads Gradus and calculates the li
 model jllamp * gaussian
 ```
 
+On Linux, `lmod` can fail with `GLIBCXX_3.4.30 not found`. The system C++ library is older than the one shipped with Julia. From the repository directory, before starting XSPEC:
+
+```sh
+export LD_LIBRARY_PATH="$PWD/build/gradus/lib/julia:${LD_LIBRARY_PATH}"
+```
+
+The reference-model build uses `build/lib/julia` instead. Setting the variable inside the XSPEC prompt is too late: XSPEC has already loaded the system library.
+
 `gaussian` is a narrow line and `jllamp` smears it. To smear a power law instead, use `model jllamp * powerlaw`.
 
 `jllampxill` is that same lamppost blurring the xillver reflection table. Put `xillverD-5.fits` in the repository folder (or point `JULIAXSPEC_TABLE_DIR` at the folder that contains it) and, in XSPEC, `model jllampxill`. The first three numbers are the lamppost. The next five are the table: photon index, iron abundance, ionisation, density, and the table's own inclination. That last angle is not the lamppost inclination.

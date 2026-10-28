@@ -99,6 +99,18 @@ after that, calls are as fast as the model itself.
 To load the package automatically in every session, add the `lmod` line with
 an absolute path to `~/.xspec/xspec.rc`.
 
+On Linux, `lmod` can fail with `GLIBCXX_3.4.30 not found`. Julia's C++ library
+is newer than `/lib64/libstdc++.so.6`, and XSPEC has already loaded the system
+copy. From the repository directory, before starting XSPEC, put the bundled
+library first on the path. For the reference models that directory is
+`build/lib/julia`. For the Gradus build it is `build/gradus/lib/julia`:
+
+```sh
+export LD_LIBRARY_PATH="$PWD/build/gradus/lib/julia:${LD_LIBRARY_PATH}"
+```
+
+Setting this inside the XSPEC prompt does not help.
+
 ## The thin-disc lamppost
 
 `jllamp` smears whatever it multiplies by the line profile of a lamppost above
