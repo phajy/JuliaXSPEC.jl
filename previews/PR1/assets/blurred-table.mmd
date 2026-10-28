@@ -1,0 +1,8 @@
+flowchart TD
+    params["source parameters"] --> table["OGIPTable"]
+    table --> spec["photons per bin on the table's energy grid"]
+    kparams["kernel parameters"] --> kernel["kernel in g"]
+    spec --> conv["convolve: direct matrix or FFT"]
+    kernel --> conv
+    bins["XSPEC energy bins, as the output bins"] --> conv
+    conv --> out["photons in each XSPEC bin"]
