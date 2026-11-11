@@ -134,10 +134,10 @@ energy grid. The file goes in the repository folder, or in the folder named by
 are the lamppost; the next five are the table, including the table inclination,
 which is separate from the lamppost inclination.
 
-The lamppost parameters are spin (0.2 to 0.998), inclination in degrees (10 to
-60), and lamp height in gravitational radii (3 to 20). `jlring` is a
+The lamppost parameters are spin (0.1 to 0.998), inclination in degrees (10 to
+70), and lamp height in gravitational radii (3 to 20). `jlring` is a
 co-rotating ring above the same disc, and `jlringxill` blurs the xillver table
-with it. The extra parameter is the ring radius (2 to 50), and the ring height
+with it. The extra parameter is the ring radius (2 to 20), and the ring height
 starts at 2.5. In XSPEC, `model jlring * gaussian` or `model jlringxill`.
 
 Each profile is calculated at a handful of parameter values and blended in

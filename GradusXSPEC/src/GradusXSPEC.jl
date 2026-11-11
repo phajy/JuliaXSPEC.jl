@@ -7,8 +7,8 @@ registered as JuliaXSPEC models.
 `jllamp` and `jlring` are convolutions: in XSPEC each smears whatever
 component it multiplies. `jllampxill` and `jlringxill` are those kernels
 blurring `xillverD-5.fits` on the table's own energy grid. Each line profile
-is calculated on a small parameter grid and remembered on disk (`jllamp-thin-v2`,
-`jlring-thin-v1`).
+is calculated on a parameter grid and remembered on disk (`jllamp-thin-v3`,
+`jlring-thin-v2`).
 """
 module GradusXSPEC
 
@@ -20,11 +20,11 @@ using JuliaXSPECModels
 # profiles can be blended.
 const G_GRID = collect(range(0.1, 1.5; length = 256))
 
-# Coarse on purpose. The default parameters sit on grid points, so the first
-# XSPEC plot calculates one profile. A finer grid can replace this later.
-const LAMP_SPIN = [0.2, 0.5, 0.8, 0.998]
-const LAMP_INC = [10.0, 30.0, 45.0, 60.0]
-const LAMP_HEIGHT = [3.0, 5.0, 10.0, 20.0]
+# Defaults sit on grid points, so the first XSPEC plot calculates one profile.
+# Spin is tighter near 1, where the line changes fastest.
+const LAMP_SPIN = [0.1, 0.25, 0.4, 0.55, 0.7, 0.8, 0.88, 0.94, 0.98, 0.998]
+const LAMP_INC = [10.0, 16.7, 23.3, 30.0, 36.7, 43.3, 50.0, 56.7, 63.3, 70.0]
+const LAMP_HEIGHT = [3.0, 4.0, 5.0, 6.5, 8.0, 10.0, 12.0, 15.0, 17.5, 20.0]
 
 """
     lamppost_profile(spin, inclination, height) -> Vector{Float64}
@@ -37,10 +37,9 @@ function lamppost_profile(spin::Real, inclination::Real, height::Real)
     metric = KerrMetric(M = 1.0, a = Float64(spin))
     disc = ThinDisc(0.0, Inf)
     corona = LampPostModel(h = Float64(height))
-    # Gradus's default. For a lamppost this is the number of polar-angle rays
-    # from 0.01° to 179.99°, not a Monte Carlo count. 128 leaves the inner
-    # disc too coarsely sampled.
-    emissivity = emissivity_profile(metric, disc, corona; n_samples = 1000)
+    # Polar-angle rays from 0.01° to 179.99°, not a Monte Carlo count.
+    # Gradus's default is 1000; its published emissivity figures use 10,000.
+    emissivity = emissivity_profile(metric, disc, corona; n_samples = 2500)
     return unit_area(observed_flux(metric, disc, emissivity, inclination),
                      "lamppost at spin=$spin, inc=$inclination, h=$height")
 end
@@ -89,12 +88,12 @@ function clamp_ring_emissivity!(profile)
     return profile
 end
 
-# Coarse, and the defaults sit on grid points. Height starts at 2.5: lower than
-# that, Gradus can sample the disc inside the horizon.
-const RING_SPIN = [0.2, 0.5, 0.8, 0.998]
-const RING_INC = [10.0, 30.0, 45.0, 60.0]
-const RING_RADIUS = [2.0, 5.0, 10.0, 20.0, 50.0]
-const RING_HEIGHT = [2.5, 5.0, 10.0, 20.0]
+# Same spin and inclination as the lamppost. Radius and height stop at 20.
+# Height starts at 2.5: lower than that, Gradus can sample the disc inside the horizon.
+const RING_SPIN = LAMP_SPIN
+const RING_INC = LAMP_INC
+const RING_RADIUS = [2.0, 3.0, 4.0, 5.0, 6.5, 8.0, 10.0, 13.0, 16.0, 20.0]
+const RING_HEIGHT = [2.5, 3.5, 5.0, 6.5, 8.0, 10.0, 12.0, 15.0, 17.5, 20.0]
 
 """
     ring_profile(spin, inclination, radius, height) -> Vector{Float64}
@@ -106,9 +105,9 @@ function ring_profile(spin::Real, inclination::Real, radius::Real, height::Real)
     metric = KerrMetric(M = 1.0, a = Float64(spin))
     disc = ThinDisc(0.0, Inf)
     corona = RingCorona(r = Float64(radius), h = Float64(height))
-    # 1000 is Gradus's default. The ring solver also requires an even count
-    # greater than 160. The previous package used 256.
-    emissivity = emissivity_profile(metric, disc, corona; n_samples = 1000)
+    # Same ray count as the lamppost. The ring solver also requires an even
+    # count greater than 160. The previous package used 256.
+    emissivity = emissivity_profile(metric, disc, corona; n_samples = 2500)
     clamp_ring_emissivity!(emissivity)
     return unit_area(observed_flux(metric, disc, emissivity, inclination),
                      "ring at spin=$spin, inc=$inclination, r=$radius, h=$height")
@@ -116,14 +115,14 @@ end
 
 const LAMP_PROFILES = GridInterpolator(
     (spin = LAMP_SPIN, inc = LAMP_INC, h = LAMP_HEIGHT);
-    cache = "jllamp-thin-v2",
+    cache = "jllamp-thin-v3",
 ) do spin, inc, h
     lamppost_profile(spin, inc, h)
 end
 
 const LAMP_PARAMETERS = [
-    Parameter("spin", 0.8; min = 0.2, max = 0.998, delta = 0.05),
-    Parameter("inc", 30.0; unit = "degrees", min = 10.0, max = 60.0, delta = 5.0),
+    Parameter("spin", 0.8; min = 0.1, max = 0.998, delta = 0.05),
+    Parameter("inc", 30.0; unit = "degrees", min = 10.0, max = 70.0, delta = 5.0),
     Parameter("h", 10.0; unit = "GM/c^2", min = 3.0, max = 20.0, delta = 1.0),
 ]
 
@@ -156,15 +155,15 @@ end
 
 const RING_PROFILES = GridInterpolator(
     (spin = RING_SPIN, inc = RING_INC, r = RING_RADIUS, h = RING_HEIGHT);
-    cache = "jlring-thin-v1",
+    cache = "jlring-thin-v2",
 ) do spin, inc, r, h
     ring_profile(spin, inc, r, h)
 end
 
 const RING_PARAMETERS = [
-    Parameter("spin", 0.8; min = 0.2, max = 0.998, delta = 0.05),
-    Parameter("inc", 30.0; unit = "degrees", min = 10.0, max = 60.0, delta = 5.0),
-    Parameter("r", 5.0; unit = "GM/c^2", min = 2.0, max = 50.0, delta = 1.0),
+    Parameter("spin", 0.8; min = 0.1, max = 0.998, delta = 0.05),
+    Parameter("inc", 30.0; unit = "degrees", min = 10.0, max = 70.0, delta = 5.0),
+    Parameter("r", 5.0; unit = "GM/c^2", min = 2.0, max = 20.0, delta = 1.0),
     Parameter("h", 5.0; unit = "GM/c^2", min = 2.5, max = 20.0, delta = 1.0),
 ]
 
